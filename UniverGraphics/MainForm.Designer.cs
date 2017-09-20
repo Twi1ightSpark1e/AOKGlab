@@ -28,18 +28,21 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.nextButton = new System.Windows.Forms.Button();
             this.glControl1 = new OpenTK.GLControl();
             this.label1 = new System.Windows.Forms.Label();
             this.addressTextBox = new System.Windows.Forms.TextBox();
             this.connectButton = new System.Windows.Forms.Button();
             this.serverButton = new System.Windows.Forms.Button();
+            this.autoChangeColorButton = new System.Windows.Forms.Button();
+            this.changeColorTimer = new System.Windows.Forms.Timer(this.components);
             this.SuspendLayout();
             // 
             // nextButton
             // 
             this.nextButton.Enabled = false;
-            this.nextButton.Location = new System.Drawing.Point(558, 254);
+            this.nextButton.Location = new System.Drawing.Point(558, 248);
             this.nextButton.Name = "nextButton";
             this.nextButton.Size = new System.Drawing.Size(114, 23);
             this.nextButton.TabIndex = 0;
@@ -61,7 +64,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(555, 183);
+            this.label1.Location = new System.Drawing.Point(555, 177);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(86, 13);
             this.label1.TabIndex = 2;
@@ -69,7 +72,7 @@
             // 
             // addressTextBox
             // 
-            this.addressTextBox.Location = new System.Drawing.Point(558, 199);
+            this.addressTextBox.Location = new System.Drawing.Point(558, 193);
             this.addressTextBox.Name = "addressTextBox";
             this.addressTextBox.Size = new System.Drawing.Size(114, 20);
             this.addressTextBox.TabIndex = 3;
@@ -77,7 +80,7 @@
             // 
             // connectButton
             // 
-            this.connectButton.Location = new System.Drawing.Point(558, 225);
+            this.connectButton.Location = new System.Drawing.Point(558, 219);
             this.connectButton.Name = "connectButton";
             this.connectButton.Size = new System.Drawing.Size(114, 23);
             this.connectButton.TabIndex = 6;
@@ -87,7 +90,7 @@
             // 
             // serverButton
             // 
-            this.serverButton.Location = new System.Drawing.Point(558, 157);
+            this.serverButton.Location = new System.Drawing.Point(558, 151);
             this.serverButton.Name = "serverButton";
             this.serverButton.Size = new System.Drawing.Size(114, 23);
             this.serverButton.TabIndex = 7;
@@ -95,11 +98,29 @@
             this.serverButton.UseVisualStyleBackColor = true;
             this.serverButton.Click += new System.EventHandler(this.serverButton_Click);
             // 
+            // autoChangeColorButton
+            // 
+            this.autoChangeColorButton.Enabled = false;
+            this.autoChangeColorButton.Location = new System.Drawing.Point(558, 278);
+            this.autoChangeColorButton.Name = "autoChangeColorButton";
+            this.autoChangeColorButton.Size = new System.Drawing.Size(114, 23);
+            this.autoChangeColorButton.TabIndex = 8;
+            this.autoChangeColorButton.Tag = "0";
+            this.autoChangeColorButton.Text = "Автосмена цветов";
+            this.autoChangeColorButton.UseVisualStyleBackColor = true;
+            this.autoChangeColorButton.Click += new System.EventHandler(this.autoChangeColorButton_Click);
+            // 
+            // changeColorTimer
+            // 
+            this.changeColorTimer.Interval = 1000;
+            this.changeColorTimer.Tick += new System.EventHandler(this.changeColorTimer_Tick);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(684, 457);
+            this.Controls.Add(this.autoChangeColorButton);
             this.Controls.Add(this.serverButton);
             this.Controls.Add(this.connectButton);
             this.Controls.Add(this.addressTextBox);
@@ -123,6 +144,8 @@
         private System.Windows.Forms.TextBox addressTextBox;
         private System.Windows.Forms.Button connectButton;
         private System.Windows.Forms.Button serverButton;
+        private System.Windows.Forms.Button autoChangeColorButton;
+        private System.Windows.Forms.Timer changeColorTimer;
     }
 }
 

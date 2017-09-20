@@ -14,7 +14,7 @@ namespace UniverGraphics
 				if (message.StartsWith("color"))
 				{
 					int colorId = Convert.ToInt32(message.Remove(0, 5));
-                    MainForm.Index = colorId;
+                    MainForm.ColorIndex = colorId;
 				}
 			};
             client.OnConnected += () =>

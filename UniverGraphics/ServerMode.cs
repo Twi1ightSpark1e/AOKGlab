@@ -13,13 +13,13 @@ namespace UniverGraphics
 			{
 				if (message.StartsWith("color"))
 				{
-                    MainForm.Index = Convert.ToInt32(message.Remove(0, 5));
+                    MainForm.ColorIndex = Convert.ToInt32(message.Remove(0, 5));
 					server.SendAllExcept(client, message);
 				}
 			};
 			server.OnConnected += (client) =>
 			{
-				server.SendTo(client, $"color{MainForm.Index}");
+				server.SendTo(client, $"color{MainForm.ColorIndex}");
 			};
             try
             {
@@ -34,7 +34,7 @@ namespace UniverGraphics
 
         public static void SendColorAll(int colorId)
         {
-            server.SendAll($"color{MainForm.Index}");
+            server.SendAll($"color{MainForm.ColorIndex}");
         }
 	}
 }

@@ -38,33 +38,31 @@ namespace UniverGraphics
                 listening = value;
                 LastInstance.glControl1.Refresh();
                 LastInstance.serverButton.Enabled = LastInstance.addressTextBox.Enabled = LastInstance.connectButton.Enabled = !listening;
-                LastInstance.nextButton.Enabled = listening;
+                LastInstance.nextButton.Enabled = LastInstance.autoChangeColorButton.Enabled = listening;
             }
 
         }
 
-        private static int index;
-        public static int Index
+        private static int colorIndex;
+        public static int ColorIndex
         {
             get
             {
-                return index;
+                return colorIndex;
             }
             set
             {
-                index = value;
+                colorIndex = value;
                 LastInstance.glControl1.Refresh();
             }
         }
-        private static List<(sbyte red, sbyte green, sbyte blue)> colors = new List<(sbyte red, sbyte green, sbyte blue)>()
+        private static List<(byte red, byte green, byte blue)> colors = new List<(byte red, byte green, byte blue)>()
         {
-            (127,  127, 127),
-            (-65,  -56,  76),
-            (109, -100, -92),
-            (127,   -1, -89),
-            (111,  100,  48),
-            (-16,   18,  62),
-            ( 67,   67,  67),
+            (  0,   0,   0),
+            (255, 255, 255),
+            (  0, 255,   0),
+            (255,   0,   0),
+            (  0,   0, 255)
         };
 
         public MainForm()
@@ -73,13 +71,18 @@ namespace UniverGraphics
             InitializeComponent();
         }
 
+        private void NextColor()
+        {
+            ColorIndex = (ColorIndex + 1) % colors.Count;
+            if (Connected)
+                ClientMode.SendColor(ColorIndex);
+            else if (Listening)
+                ServerMode.SendColorAll(ColorIndex);
+        }
+
         private void nextButton_Click(object sender, EventArgs e)
         {
-            Index = (Index + 1) % colors.Count;
-            if (Connected)
-                ClientMode.SendColor(Index);
-            else if (Listening)
-                ServerMode.SendColorAll(Index);
+            NextColor();
         }
 
         private void glControl1_Resize(object sender, EventArgs e)
@@ -94,7 +97,7 @@ namespace UniverGraphics
         private void glControl1_Paint(object sender, PaintEventArgs e)
         {
             //Установим фоновый цвет
-            GL.ClearColor(0.22f, 0.88f, 0.11f, 0.5f);
+            GL.ClearColor(new OpenTK.Graphics.Color4(105, 29, 142, 0));
             //Не будем ничего рисовать, пока не подключимся к серверу
             if (Connected || Listening)
             { 
@@ -109,7 +112,7 @@ namespace UniverGraphics
                 Matrix4 modelview = Matrix4.LookAt(3, 3, 5, 0, 0, 0, 0, 1, 0);
                 GL.LoadMatrix(ref modelview);
                 //Установим цвет фигуры
-                (sbyte red, sbyte green, sbyte blue) color = colors[Index];
+                (byte red, byte green, byte blue) color = colors[ColorIndex];
                 GL.Color3(color.red, color.green, color.blue);
                 //Нарисуем фигуру
                 PaintCube();
@@ -176,6 +179,20 @@ namespace UniverGraphics
             serverButton.Enabled = addressTextBox.Enabled = connectButton.Enabled = false;
             ServerMode.Start(this);
             Text = "Лабораторная работа №1 (сервер)";
+        }
+
+        private void autoChangeColorButton_Click(object sender, EventArgs e)
+        {
+            changeColorTimer.Enabled = !changeColorTimer.Enabled;
+            if (autoChangeColorButton.Tag.Equals("0"))
+                autoChangeColorButton.Text = "Остановить";
+            else autoChangeColorButton.Text = "Автосмена цветов";
+            autoChangeColorButton.Tag = ((int.Parse((string)autoChangeColorButton.Tag) + 1) % 2).ToString();
+        }
+
+        private void changeColorTimer_Tick(object sender, EventArgs e)
+        {
+            NextColor();
         }
     }
 }
