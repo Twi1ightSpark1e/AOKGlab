@@ -109,13 +109,29 @@ namespace UniverGraphics
                 //Настройка позиции "глаз"
                 GL.MatrixMode(MatrixMode.Modelview);
                 GL.LoadIdentity();
-                Matrix4 modelview = Matrix4.LookAt(3, 3, 5, 0, 0, 0, 0, 1, 0);
+                List<Vector3> multiplyList = new List<Vector3>()
+                {
+                    new Vector3(1, 0, -1),
+                    new Vector3(1, 0, 1),
+                    new Vector3(-1, 0, 1),
+                    new Vector3(-1, 0, -1)
+                };
+                Matrix4 modelview = Matrix4.LookAt(5f, 15, 0f, 0, 0, 0, 0, 1, 0);
                 GL.LoadMatrix(ref modelview);
-                //Установим цвет фигуры
-                (byte red, byte green, byte blue) color = colors[ColorIndex];
-                GL.Color3(color.red, color.green, color.blue);
-                //Нарисуем фигуру
-                PaintCube();
+                double angle = -45;
+                foreach (Vector3 multiplyVector in multiplyList)
+                {
+                    GL.PushMatrix();
+                    GL.Translate(multiplyVector * 4);
+                    GL.Rotate(angle -= 90, 0, 1, 0);
+                    //Установим цвет фигуры
+                    (byte red, byte green, byte blue) color = colors[ColorIndex];
+                    GL.Color3(color.red, color.green, color.blue);
+                    //Нарисуем фигуру
+                    PaintCube();
+                    //Teapot.GlWireTeapot(1f);
+                    GL.PopMatrix();
+                }
                 //Поменяем местами буферы
                 glControl1.SwapBuffers();
             }
@@ -123,47 +139,66 @@ namespace UniverGraphics
 
         private void PaintCube()
         {
-            //ребро 1
+            //поверхность 1
             GL.Begin(BeginMode.LineLoop);
             GL.Vertex3(1, 1, -1);
             GL.Vertex3(1, -1, -1);
             GL.Vertex3(-1, -1, -1);
             GL.Vertex3(-1, 1, -1);
             GL.End();
-            //ребро 2
+            //поверхность 2
             GL.Begin(BeginMode.LineLoop);
             GL.Vertex3(-1, -1, -1);
             GL.Vertex3(1, -1, -1);
             GL.Vertex3(1, -1, 1);
             GL.Vertex3(-1, -1, 1);
             GL.End();
-            //ребро 3
+            //поверхность 3
             GL.Begin(BeginMode.LineLoop);
             GL.Vertex3(-1, 1, -1);
             GL.Vertex3(-1, -1, -1);
             GL.Vertex3(-1, -1, 1);
             GL.Vertex3(-1, 1, 1);
             GL.End();
-            //ребро 4
+            //поверхность 4
             GL.Begin(BeginMode.LineLoop);
             GL.Vertex3(1, 1, 1);
             GL.Vertex3(1, -1, 1);
             GL.Vertex3(1, -1, -1);
             GL.Vertex3(1, 1, -1);
             GL.End();
-            //ребро 5
+            //поверхность 5
             GL.Begin(BeginMode.LineLoop);
             GL.Vertex3(-1, 1, -1);
             GL.Vertex3(-1, 1, 1);
             GL.Vertex3(1, 1, 1);
             GL.Vertex3(1, 1, -1);
             GL.End();
-            //ребро 6
+            //поверхность 6
             GL.Begin(BeginMode.LineLoop);
             GL.Vertex3(-1, 1, 1);
             GL.Vertex3(-1, -1, 1);
             GL.Vertex3(1, -1, 1);
             GL.Vertex3(1, 1, 1);
+            GL.End();
+            ///направляющая пирамида
+            //поверхность 1
+            GL.Begin(BeginMode.LineLoop);
+            GL.Vertex3(1, 1, 1);
+            GL.Vertex3(2, 0, 0);
+            GL.Vertex3(1, -1, 1);
+            GL.End();
+            //поверхность 2
+            GL.Begin(BeginMode.LineLoop);
+            GL.Vertex3(1, -1, 1);
+            GL.Vertex3(2, 0, 0);
+            GL.Vertex3(1, -1, -1);
+            GL.End();
+            //поверхность 3
+            GL.Begin(BeginMode.LineLoop);
+            GL.Vertex3(1, -1, -1);
+            GL.Vertex3(2, 0, 0);
+            GL.Vertex3(1, 1, -1);
             GL.End();
         }
 
