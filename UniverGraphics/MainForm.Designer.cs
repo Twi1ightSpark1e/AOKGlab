@@ -112,7 +112,7 @@
             // 
             // changeColorTimer
             // 
-            this.changeColorTimer.Interval = 1000;
+            this.changeColorTimer.Interval = 500;
             this.changeColorTimer.Tick += new System.EventHandler(this.changeColorTimer_Tick);
             // 
             // MainForm
@@ -130,7 +130,7 @@
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.Name = "MainForm";
-            this.Text = "Лабораторная работа №1";
+            this.Text = "Лабораторная работа №2";
             this.ResumeLayout(false);
             this.PerformLayout();
 

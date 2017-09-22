@@ -53,6 +53,9 @@ namespace UniverGraphics
             set
             {
                 colorIndex = value;
+                int color = colorIndex;
+                foreach (LittleHome house in houses)
+                    house.Color = colors[color++ % colors.Count];
                 LastInstance.glControl1.Refresh();
             }
         }
@@ -64,11 +67,26 @@ namespace UniverGraphics
             (255,   0,   0),
             (  0,   0, 255)
         };
+        private static LittleHome[] houses = new LittleHome[4];
 
         public MainForm()
         {
             LastInstance = this;
             InitializeComponent();
+
+            List<Vector3> multiplyList = new List<Vector3>()
+            {
+                new Vector3(1, 0, -1),
+                new Vector3(1, 0, 1),
+                new Vector3(-1, 0, 1),
+                new Vector3(-1, 0, -1)
+            };
+            int angle = -45;
+            for (int i = 0; i < houses.Length; i++)
+            {
+                houses[i] = new LittleHome(angle -= 90, colors[i % colors.Count], multiplyList[i]);
+                //angle -= 90;
+            }
         }
 
         private void NextColor()
@@ -100,7 +118,7 @@ namespace UniverGraphics
             GL.ClearColor(new OpenTK.Graphics.Color4(105, 29, 142, 0));
             //Не будем ничего рисовать, пока не подключимся к серверу
             if (Connected || Listening)
-            { 
+            {
                 //Для начала очистим буфер
                 GL.Clear(ClearBufferMask.ColorBufferBit);
                 GL.Clear(ClearBufferMask.DepthBufferBit);
@@ -109,111 +127,27 @@ namespace UniverGraphics
                 //Настройка позиции "глаз"
                 GL.MatrixMode(MatrixMode.Modelview);
                 GL.LoadIdentity();
-                List<Vector3> multiplyList = new List<Vector3>()
-                {
-                    new Vector3(1, 0, -1),
-                    new Vector3(1, 0, 1),
-                    new Vector3(-1, 0, 1),
-                    new Vector3(-1, 0, -1)
-                };
-                Matrix4 modelview = Matrix4.LookAt(5f, 15, 0f, 0, 0, 0, 0, 1, 0);
+                Matrix4 modelview = Matrix4.LookAt(15f, 5, 0f, 0, 0, 0, 0, 1, 0);
                 GL.LoadMatrix(ref modelview);
-                double angle = -45;
-                foreach (Vector3 multiplyVector in multiplyList)
-                {
-                    GL.PushMatrix();
-                    GL.Translate(multiplyVector * 4);
-                    GL.Rotate(angle -= 90, 0, 1, 0);
-                    //Установим цвет фигуры
-                    (byte red, byte green, byte blue) color = colors[ColorIndex];
-                    GL.Color3(color.red, color.green, color.blue);
-                    //Нарисуем фигуру
-                    PaintCube();
-                    //Teapot.GlWireTeapot(1f);
-                    GL.PopMatrix();
-                }
+                foreach (LittleHome house in houses)
+                    house.Show();
                 //Поменяем местами буферы
                 glControl1.SwapBuffers();
             }
-        }
-
-        private void PaintCube()
-        {
-            //поверхность 1
-            GL.Begin(BeginMode.LineLoop);
-            GL.Vertex3(1, 1, -1);
-            GL.Vertex3(1, -1, -1);
-            GL.Vertex3(-1, -1, -1);
-            GL.Vertex3(-1, 1, -1);
-            GL.End();
-            //поверхность 2
-            GL.Begin(BeginMode.LineLoop);
-            GL.Vertex3(-1, -1, -1);
-            GL.Vertex3(1, -1, -1);
-            GL.Vertex3(1, -1, 1);
-            GL.Vertex3(-1, -1, 1);
-            GL.End();
-            //поверхность 3
-            GL.Begin(BeginMode.LineLoop);
-            GL.Vertex3(-1, 1, -1);
-            GL.Vertex3(-1, -1, -1);
-            GL.Vertex3(-1, -1, 1);
-            GL.Vertex3(-1, 1, 1);
-            GL.End();
-            //поверхность 4
-            GL.Begin(BeginMode.LineLoop);
-            GL.Vertex3(1, 1, 1);
-            GL.Vertex3(1, -1, 1);
-            GL.Vertex3(1, -1, -1);
-            GL.Vertex3(1, 1, -1);
-            GL.End();
-            //поверхность 5
-            GL.Begin(BeginMode.LineLoop);
-            GL.Vertex3(-1, 1, -1);
-            GL.Vertex3(-1, 1, 1);
-            GL.Vertex3(1, 1, 1);
-            GL.Vertex3(1, 1, -1);
-            GL.End();
-            //поверхность 6
-            GL.Begin(BeginMode.LineLoop);
-            GL.Vertex3(-1, 1, 1);
-            GL.Vertex3(-1, -1, 1);
-            GL.Vertex3(1, -1, 1);
-            GL.Vertex3(1, 1, 1);
-            GL.End();
-            ///направляющая пирамида
-            //поверхность 1
-            GL.Begin(BeginMode.LineLoop);
-            GL.Vertex3(1, 1, 1);
-            GL.Vertex3(2, 0, 0);
-            GL.Vertex3(1, -1, 1);
-            GL.End();
-            //поверхность 2
-            GL.Begin(BeginMode.LineLoop);
-            GL.Vertex3(1, -1, 1);
-            GL.Vertex3(2, 0, 0);
-            GL.Vertex3(1, -1, -1);
-            GL.End();
-            //поверхность 3
-            GL.Begin(BeginMode.LineLoop);
-            GL.Vertex3(1, -1, -1);
-            GL.Vertex3(2, 0, 0);
-            GL.Vertex3(1, 1, -1);
-            GL.End();
         }
 
         private void connectButton_Click(object sender, EventArgs e)
         {
             serverButton.Enabled = addressTextBox.Enabled = connectButton.Enabled = false;
             ClientMode.Start(addressTextBox.Text);
-            Text = "Лабораторная работа №1 (клиент)";
+            Text = "Лабораторная работа №2 (клиент)";
         }
 
         private void serverButton_Click(object sender, EventArgs e)
         {
             serverButton.Enabled = addressTextBox.Enabled = connectButton.Enabled = false;
             ServerMode.Start(this);
-            Text = "Лабораторная работа №1 (сервер)";
+            Text = "Лабораторная работа №2 (сервер)";
         }
 
         private void autoChangeColorButton_Click(object sender, EventArgs e)
