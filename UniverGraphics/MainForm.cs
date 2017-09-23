@@ -23,7 +23,7 @@ namespace UniverGraphics
                 connected = value;
                 LastInstance.glControl1.Refresh();
                 LastInstance.serverButton.Enabled = LastInstance.addressTextBox.Enabled = LastInstance.connectButton.Enabled = !connected;
-                LastInstance.nextButton.Enabled = connected;
+                LastInstance.nextButton.Enabled = LastInstance.autoChangeColorButton.Enabled = connected;
             }
         }
         private static bool listening;
@@ -56,7 +56,10 @@ namespace UniverGraphics
                 int color = colorIndex;
                 foreach (LittleHome house in houses)
                     house.Color = colors[color++ % colors.Count];
-                LastInstance.glControl1.Refresh();
+                LastInstance.Invoke((MethodInvoker)delegate
+                {
+                    LastInstance.glControl1.Refresh();
+                });
             }
         }
         private static List<(byte red, byte green, byte blue)> colors = new List<(byte red, byte green, byte blue)>()
