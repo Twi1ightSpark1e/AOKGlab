@@ -30,8 +30,8 @@ namespace UniverGraphics
             //Установим цвет фигуры
             GL.Color3(Color.red, Color.green, Color.blue);
             //Нарисуем фигуру
-            PaintLittleHome();
-            //Teapot.GlWireTeapot(1f);
+            // PaintLittleHome();
+            Teapot.DrawSolidTeapot(1.0f);
             GL.PopMatrix();
         }
 
