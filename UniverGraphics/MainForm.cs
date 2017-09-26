@@ -87,7 +87,7 @@ namespace UniverGraphics
             int angle = -45;
             for (int i = 0; i < houses.Length; i++)
             {
-                houses[i] = new LittleHome(angle -= 90, colors[i % colors.Count], multiplyList[i]);
+                houses[i] = new LittleHome(angle -= 90, colors[i % colors.Count], multiplyList[i] * 3);
                 //angle -= 90;
             }
         }
@@ -130,7 +130,7 @@ namespace UniverGraphics
                 //Настройка позиции "глаз"
                 GL.MatrixMode(MatrixMode.Modelview);
                 GL.LoadIdentity();
-                Matrix4 modelview = Matrix4.LookAt(15f, 5, 0f, 0, 0, 0, 0, 1, 0);
+                Matrix4 modelview = Matrix4.LookAt(10f, 5, 0f, 0, 0, 0, 0, 1, 0);
                 GL.LoadMatrix(ref modelview);
                 foreach (LittleHome house in houses)
                     house.Show();

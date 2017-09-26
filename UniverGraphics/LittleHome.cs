@@ -25,13 +25,13 @@ namespace UniverGraphics
         public void Show()
         {
             GL.PushMatrix();
-            GL.Translate(TranslateVector * 4);
+            GL.Translate(TranslateVector);
             GL.Rotate(Angle, 0, 1, 0);
             //Установим цвет фигуры
             GL.Color3(Color.red, Color.green, Color.blue);
             //Нарисуем фигуру
             // PaintLittleHome();
-            Teapot.DrawSolidTeapot(1.0f);
+            Teapot.DrawWireTeapot(1.0f);
             GL.PopMatrix();
         }
 
