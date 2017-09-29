@@ -6,6 +6,8 @@ namespace UniverGraphics
 	class ClientMode
 	{
 		private static ClientSocket client;
+        public static ClientSocket Client => client;
+
 		public static void Start(string host)
 		{
 			client = new ClientSocket(host, 4115);
@@ -39,5 +41,10 @@ namespace UniverGraphics
 		{
 			client.SendMessage($"color{colorId}");
 		}
+
+        public static void SendCoordinates(string value)
+        {
+            client.SendMessage($"coords{value}");
+        }
 	}
 }

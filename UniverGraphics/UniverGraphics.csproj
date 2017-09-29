@@ -54,6 +54,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Camera.cs" />
     <Compile Include="ClientMode.cs" />
     <Compile Include="ClientSocket.cs" />
     <Compile Include="LittleHome.cs" />

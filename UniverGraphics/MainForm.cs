@@ -4,12 +4,17 @@ using System.Windows.Forms;
 
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
+using OpenTK.Input;
+using System.Diagnostics;
+using System.IO;
 
 namespace UniverGraphics
 {
     public partial class MainForm : Form
     {
         public static MainForm LastInstance { get; private set; }
+
+        private List<string> log = new List<string>();
 
         private static bool connected;
         public static bool Connected
@@ -24,6 +29,14 @@ namespace UniverGraphics
                 LastInstance.glControl1.Refresh();
                 LastInstance.serverButton.Enabled = LastInstance.addressTextBox.Enabled = LastInstance.connectButton.Enabled = !connected;
                 LastInstance.nextButton.Enabled = LastInstance.autoChangeColorButton.Enabled = connected;
+                if (value)
+                {
+                    Application.Idle += LastInstance.mainForm_onIdle;
+                    if (stopwatch == null)
+                        stopwatch = Stopwatch.StartNew();
+                    else stopwatch.Restart();
+                }
+                else Application.Idle -= LastInstance.mainForm_onIdle;
             }
         }
         private static bool listening;
@@ -39,6 +52,14 @@ namespace UniverGraphics
                 LastInstance.glControl1.Refresh();
                 LastInstance.serverButton.Enabled = LastInstance.addressTextBox.Enabled = LastInstance.connectButton.Enabled = !listening;
                 LastInstance.nextButton.Enabled = LastInstance.autoChangeColorButton.Enabled = listening;
+                if (value)
+                {
+                    Application.Idle += LastInstance.mainForm_onIdle;
+                    if (stopwatch == null)
+                        stopwatch = Stopwatch.StartNew();
+                    else stopwatch.Restart();
+                }
+                else Application.Idle -= LastInstance.mainForm_onIdle;
             }
 
         }
@@ -71,6 +92,8 @@ namespace UniverGraphics
             (  0,   0, 255)
         };
         private static LittleHome[] houses = new LittleHome[4];
+        private static Camera camera;
+        private static Stopwatch stopwatch;
 
         public MainForm()
         {
@@ -90,6 +113,12 @@ namespace UniverGraphics
                 houses[i] = new LittleHome(angle -= 90, colors[i % colors.Count], multiplyList[i] * 3);
                 //angle -= 90;
             }
+            camera = new Camera(this)
+            {
+                Eye    = new Vector3(10, 5, 0),
+                Target = new Vector3( 0, 0, 0),
+                Up     = new Vector3( 0, 1, 0)
+            };
         }
 
         private void NextColor()
@@ -111,7 +140,7 @@ namespace UniverGraphics
             GL.Viewport(0, 0, glControl1.Width, glControl1.Height);
             GL.MatrixMode(MatrixMode.Projection);
             GL.LoadIdentity();
-            Matrix4 perspective = Matrix4.Perspective(45.0f, glControl1.Width / glControl1.Height, 0.01f, 5000.0f);
+            Matrix4 perspective = Matrix4.CreatePerspectiveFieldOfView(0.785398f, glControl1.Width / glControl1.Height, 0.01f, 5000.0f); //0,785398 это 45 градусов в радианах
             GL.LoadMatrix(ref perspective);
         }
 
@@ -128,10 +157,7 @@ namespace UniverGraphics
 
                 //Настройки для просмотра
                 //Настройка позиции "глаз"
-                GL.MatrixMode(MatrixMode.Modelview);
-                GL.LoadIdentity();
-                Matrix4 modelview = Matrix4.LookAt(10f, 5, 0f, 0, 0, 0, 0, 1, 0);
-                GL.LoadMatrix(ref modelview);
+                camera.SetCamera();
                 foreach (LittleHome house in houses)
                     house.Show();
                 //Поменяем местами буферы
@@ -139,10 +165,42 @@ namespace UniverGraphics
             }
         }
 
+        private void CoordinatesReceived(string message)
+        {
+            if (message.StartsWith("coords"))
+            {
+                message = message.Remove(0, 6);
+                string[] coordinates = message.Split(';');
+                foreach (string coordinate in coordinates)
+                {
+                    Vector3 temp;
+                    switch (coordinate[0])
+                    {
+                        case 'x':
+                            temp = camera.Eye;
+                            temp.X = float.Parse(coordinate.Remove(0, 2));
+                            camera.Eye = temp;
+                            break;
+                        case 'y':
+                            temp = camera.Eye;
+                            temp.Y = float.Parse(coordinate.Remove(0, 2));
+                            camera.Eye = temp;
+                            break;
+                        case 'z':
+                            temp = camera.Eye;
+                            temp.Z = float.Parse(coordinate.Remove(0, 2));
+                            camera.Eye = temp;
+                            break;
+                    }
+                }
+            }
+        }
+
         private void connectButton_Click(object sender, EventArgs e)
         {
             serverButton.Enabled = addressTextBox.Enabled = connectButton.Enabled = false;
             ClientMode.Start(addressTextBox.Text);
+            ClientMode.Client.OnReceive += CoordinatesReceived;
             Text = "Лабораторная работа №2 (клиент)";
         }
 
@@ -150,6 +208,10 @@ namespace UniverGraphics
         {
             serverButton.Enabled = addressTextBox.Enabled = connectButton.Enabled = false;
             ServerMode.Start(this);
+            ServerMode.Server.OnReceive += (client, message) => 
+            {
+                CoordinatesReceived(message);
+            };
             Text = "Лабораторная работа №2 (сервер)";
         }
 
@@ -165,6 +227,53 @@ namespace UniverGraphics
         private void changeColorTimer_Tick(object sender, EventArgs e)
         {
             NextColor();
+        }
+
+        private void mainForm_onIdle(object sender, EventArgs e)
+        {
+            float millisecondsElapsed = (float)stopwatch.Elapsed.TotalMilliseconds;
+            stopwatch.Restart();
+            //Text = elapsedTicks.ToString();
+            var state = Keyboard.GetState();
+            Directions dirs = Directions.None;
+            dirs |= state.IsKeyDown(Key.Up) ? Directions.Up : Directions.None;
+            dirs |= state.IsKeyDown(Key.Down) ? Directions.Down : Directions.None;
+            dirs |= state.IsKeyDown(Key.Left) ? Directions.Left : Directions.None;
+            dirs |= state.IsKeyDown(Key.Right) ? Directions.Right : Directions.None;
+            dirs |= (state.IsKeyDown(Key.Plus) || state.IsKeyDown(Key.KeypadPlus)) ? Directions.Forward : Directions.None;
+            dirs |= (state.IsKeyDown(Key.Minus) || state.IsKeyDown(Key.KeypadMinus)) ? Directions.Backward : Directions.None;
+            label2.Text = "UP: " + state.IsKeyDown(Key.Up).ToString();
+            label3.Text = "DOWN: " + state.IsKeyDown(Key.Down).ToString();
+            label4.Text = "LEFT: " + state.IsKeyDown(Key.Left).ToString();
+            label5.Text = "RIGHT: " + state.IsKeyDown(Key.Right).ToString();
+            label6.Text = "PLUS: " + (state.IsKeyDown(Key.Plus) || state.IsKeyDown(Key.KeypadPlus)).ToString();
+            label7.Text = "MINUS: " + (state.IsKeyDown(Key.Minus) || state.IsKeyDown(Key.KeypadMinus)).ToString();
+            camera.CurrentDirection = dirs;
+            camera.Simulate(millisecondsElapsed);
+            if (camera.ChangedCoordinates != string.Empty)
+            {
+                if (Connected)
+                    ClientMode.SendCoordinates(camera.ChangedCoordinates);
+                else if (Listening)
+                    ServerMode.SendCoordinatesAll(camera.ChangedCoordinates);
+            }
+            glControl1.Refresh();
+            
+            //log.Add($"UP: {state.IsKeyDown(Key.Up).ToString():6} DOWN: {state.IsKeyDown(Key.Down).ToString():6} LEFT: {state.IsKeyDown(Key.Left).ToString():6} RIGHT: {state.IsKeyDown(Key.Right).ToString():6} PLUS: {(state.IsKeyDown(Key.Plus) || state.IsKeyDown(Key.KeypadPlus)).ToString():6} MINUS: {(state.IsKeyDown(Key.Minus) || state.IsKeyDown(Key.KeypadMinus)).ToString():6} X: {camera.Eye.X} Y: {camera.Eye.Y} Z: {camera.Eye.Z}");
+        }
+
+        private void glControl1_Load(object sender, EventArgs e)
+        {
+            GL.Enable(EnableCap.DepthTest);
+        }
+
+        private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            StreamWriter sw = new StreamWriter("log.txt");
+            foreach (string line in log)
+                sw.WriteLine(line);
+            sw.Flush();
+            sw.Close();
         }
     }
 }

@@ -6,6 +6,7 @@ namespace UniverGraphics
 	class ServerMode
 	{
 		private static ServerSocket server = new ServerSocket(4115);
+        public static ServerSocket Server => server;
 
 		public static void Start(Form owner)
 		{
@@ -14,9 +15,9 @@ namespace UniverGraphics
 				if (message.StartsWith("color"))
 				{
                     MainForm.ColorIndex = Convert.ToInt32(message.Remove(0, 5));
-					server.SendAllExcept(client, message);
 				}
-			};
+                server.SendAllExcept(client, message);
+            };
 			server.OnConnected += (client) =>
 			{
 				server.SendTo(client, $"color{MainForm.ColorIndex}");
@@ -34,7 +35,12 @@ namespace UniverGraphics
 
         public static void SendColorAll(int colorId)
         {
-            server.SendAll($"color{MainForm.ColorIndex}");
+            server.SendAll($"color{colorId}");
+        }
+
+        public static void SendCoordinatesAll(string value)
+        {
+            server.SendAll($"coords{value}");
         }
 	}
 }

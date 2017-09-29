@@ -37,12 +37,18 @@
             this.serverButton = new System.Windows.Forms.Button();
             this.autoChangeColorButton = new System.Windows.Forms.Button();
             this.changeColorTimer = new System.Windows.Forms.Timer(this.components);
+            this.label2 = new System.Windows.Forms.Label();
+            this.label3 = new System.Windows.Forms.Label();
+            this.label4 = new System.Windows.Forms.Label();
+            this.label5 = new System.Windows.Forms.Label();
+            this.label6 = new System.Windows.Forms.Label();
+            this.label7 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // nextButton
             // 
             this.nextButton.Enabled = false;
-            this.nextButton.Location = new System.Drawing.Point(558, 248);
+            this.nextButton.Location = new System.Drawing.Point(558, 170);
             this.nextButton.Name = "nextButton";
             this.nextButton.Size = new System.Drawing.Size(114, 23);
             this.nextButton.TabIndex = 0;
@@ -58,13 +64,14 @@
             this.glControl1.Size = new System.Drawing.Size(533, 432);
             this.glControl1.TabIndex = 1;
             this.glControl1.VSync = false;
+            this.glControl1.Load += new System.EventHandler(this.glControl1_Load);
             this.glControl1.Paint += new System.Windows.Forms.PaintEventHandler(this.glControl1_Paint);
             this.glControl1.Resize += new System.EventHandler(this.glControl1_Resize);
             // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(555, 177);
+            this.label1.Location = new System.Drawing.Point(555, 99);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(86, 13);
             this.label1.TabIndex = 2;
@@ -72,7 +79,7 @@
             // 
             // addressTextBox
             // 
-            this.addressTextBox.Location = new System.Drawing.Point(558, 193);
+            this.addressTextBox.Location = new System.Drawing.Point(558, 115);
             this.addressTextBox.Name = "addressTextBox";
             this.addressTextBox.Size = new System.Drawing.Size(114, 20);
             this.addressTextBox.TabIndex = 3;
@@ -80,7 +87,7 @@
             // 
             // connectButton
             // 
-            this.connectButton.Location = new System.Drawing.Point(558, 219);
+            this.connectButton.Location = new System.Drawing.Point(558, 141);
             this.connectButton.Name = "connectButton";
             this.connectButton.Size = new System.Drawing.Size(114, 23);
             this.connectButton.TabIndex = 6;
@@ -90,7 +97,7 @@
             // 
             // serverButton
             // 
-            this.serverButton.Location = new System.Drawing.Point(558, 151);
+            this.serverButton.Location = new System.Drawing.Point(558, 73);
             this.serverButton.Name = "serverButton";
             this.serverButton.Size = new System.Drawing.Size(114, 23);
             this.serverButton.TabIndex = 7;
@@ -101,7 +108,7 @@
             // autoChangeColorButton
             // 
             this.autoChangeColorButton.Enabled = false;
-            this.autoChangeColorButton.Location = new System.Drawing.Point(558, 278);
+            this.autoChangeColorButton.Location = new System.Drawing.Point(558, 200);
             this.autoChangeColorButton.Name = "autoChangeColorButton";
             this.autoChangeColorButton.Size = new System.Drawing.Size(114, 23);
             this.autoChangeColorButton.TabIndex = 8;
@@ -115,11 +122,71 @@
             this.changeColorTimer.Interval = 500;
             this.changeColorTimer.Tick += new System.EventHandler(this.changeColorTimer_Tick);
             // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(551, 230);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(35, 13);
+            this.label2.TabIndex = 9;
+            this.label2.Text = "label2";
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(551, 252);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(35, 13);
+            this.label3.TabIndex = 10;
+            this.label3.Text = "label3";
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(551, 274);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(35, 13);
+            this.label4.TabIndex = 11;
+            this.label4.Text = "label4";
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(551, 296);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(35, 13);
+            this.label5.TabIndex = 12;
+            this.label5.Text = "label5";
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(551, 318);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(35, 13);
+            this.label6.TabIndex = 13;
+            this.label6.Text = "label6";
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(551, 341);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(35, 13);
+            this.label7.TabIndex = 14;
+            this.label7.Text = "label7";
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(684, 457);
+            this.Controls.Add(this.label7);
+            this.Controls.Add(this.label6);
+            this.Controls.Add(this.label5);
+            this.Controls.Add(this.label4);
+            this.Controls.Add(this.label3);
+            this.Controls.Add(this.label2);
             this.Controls.Add(this.autoChangeColorButton);
             this.Controls.Add(this.serverButton);
             this.Controls.Add(this.connectButton);
@@ -131,6 +198,7 @@
             this.MaximizeBox = false;
             this.Name = "MainForm";
             this.Text = "Лабораторная работа №2";
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.MainForm_FormClosed);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -146,6 +214,12 @@
         private System.Windows.Forms.Button serverButton;
         private System.Windows.Forms.Button autoChangeColorButton;
         private System.Windows.Forms.Timer changeColorTimer;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.Label label7;
     }
 }
 
