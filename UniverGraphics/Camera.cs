@@ -30,12 +30,6 @@ namespace UniverGraphics
 
         public Directions CurrentDirection { get; set; }
         public float Speed => 3f;
-        private MainForm owner;
-
-        public Camera(MainForm owner)
-        {
-            this.owner = owner;
-        }
 
         public void SetCamera()
         {
@@ -48,6 +42,7 @@ namespace UniverGraphics
         public void Simulate(float millisecondsElapsed)
         {
             Vector3 eye = Eye;
+            Vector3 target = Target;
             ChangedCoordinates = string.Empty;
             if (CurrentDirection.HasFlag(Directions.Up))
             {
@@ -72,15 +67,16 @@ namespace UniverGraphics
             if (CurrentDirection.HasFlag(Directions.Forward))
             {
                 eye.X -= Speed * millisecondsElapsed / 1000; //приближаемся
-                ChangedCoordinates += $"x={eye.X}";
+                ChangedCoordinates += $"x={eye.X};";
             }
             if (CurrentDirection.HasFlag(Directions.Backward))
             {
                 eye.X += Speed * millisecondsElapsed / 1000; //отдаляемся
-                ChangedCoordinates += $"x={eye.X}";
+                ChangedCoordinates += $"x={eye.X};";
             }
             ChangedCoordinates = ChangedCoordinates.Trim(';');
             Eye = eye;
+            Target = target;
         }
     }
 }

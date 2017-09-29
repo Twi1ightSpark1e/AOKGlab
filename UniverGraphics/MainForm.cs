@@ -94,6 +94,7 @@ namespace UniverGraphics
         private static LittleHome[] houses = new LittleHome[4];
         private static Camera camera;
         private static Stopwatch stopwatch;
+        private static object locker = new object();
 
         public MainForm()
         {
@@ -113,9 +114,9 @@ namespace UniverGraphics
                 houses[i] = new LittleHome(angle -= 90, colors[i % colors.Count], multiplyList[i] * 3);
                 //angle -= 90;
             }
-            camera = new Camera(this)
+            camera = new Camera()
             {
-                Eye    = new Vector3(10, 5, 0),
+                Eye    = new Vector3(12, 7, 0),
                 Target = new Vector3( 0, 0, 0),
                 Up     = new Vector3( 0, 1, 0)
             };
@@ -167,30 +168,33 @@ namespace UniverGraphics
 
         private void CoordinatesReceived(string message)
         {
-            if (message.StartsWith("coords"))
+            lock (locker)
             {
-                message = message.Remove(0, 6);
-                string[] coordinates = message.Split(';');
-                foreach (string coordinate in coordinates)
+                if (message.StartsWith("coords"))
                 {
-                    Vector3 temp;
-                    switch (coordinate[0])
+                    message = message.Remove(0, 6);
+                    string[] coordinates = message.Split(';');
+                    foreach (string coordinate in coordinates)
                     {
-                        case 'x':
-                            temp = camera.Eye;
-                            temp.X = float.Parse(coordinate.Remove(0, 2));
-                            camera.Eye = temp;
-                            break;
-                        case 'y':
-                            temp = camera.Eye;
-                            temp.Y = float.Parse(coordinate.Remove(0, 2));
-                            camera.Eye = temp;
-                            break;
-                        case 'z':
-                            temp = camera.Eye;
-                            temp.Z = float.Parse(coordinate.Remove(0, 2));
-                            camera.Eye = temp;
-                            break;
+                        Vector3 temp;
+                        switch (coordinate[0])
+                        {
+                            case 'x':
+                                temp = camera.Eye;
+                                temp.X = float.Parse(coordinate.Remove(0, 2));
+                                camera.Eye = temp;
+                                break;
+                            case 'y':
+                                temp = camera.Eye;
+                                temp.Y = float.Parse(coordinate.Remove(0, 2));
+                                camera.Eye = temp;
+                                break;
+                            case 'z':
+                                temp = camera.Eye;
+                                temp.Z = float.Parse(coordinate.Remove(0, 2));
+                                camera.Eye = temp;
+                                break;
+                        }
                     }
                 }
             }
@@ -257,7 +261,7 @@ namespace UniverGraphics
                 else if (Listening)
                     ServerMode.SendCoordinatesAll(camera.ChangedCoordinates);
             }
-            glControl1.Refresh();
+            glControl1.Invalidate();
             
             //log.Add($"UP: {state.IsKeyDown(Key.Up).ToString():6} DOWN: {state.IsKeyDown(Key.Down).ToString():6} LEFT: {state.IsKeyDown(Key.Left).ToString():6} RIGHT: {state.IsKeyDown(Key.Right).ToString():6} PLUS: {(state.IsKeyDown(Key.Plus) || state.IsKeyDown(Key.KeypadPlus)).ToString():6} MINUS: {(state.IsKeyDown(Key.Minus) || state.IsKeyDown(Key.KeypadMinus)).ToString():6} X: {camera.Eye.X} Y: {camera.Eye.Y} Z: {camera.Eye.Z}");
         }
@@ -274,6 +278,14 @@ namespace UniverGraphics
                 sw.WriteLine(line);
             sw.Flush();
             sw.Close();
+        }
+
+        private void MainForm_Deactivate(object sender, EventArgs e)
+        {
+        }
+
+        private void MainForm_Activated(object sender, EventArgs e)
+        {
         }
     }
 }
