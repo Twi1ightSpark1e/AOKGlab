@@ -239,6 +239,7 @@ namespace UniverGraphics
             stopwatch.Restart();
             //Text = elapsedTicks.ToString();
             var state = Keyboard.GetState();
+            Vector3 eye = camera.Eye; 
             Directions dirs = Directions.None;
             dirs |= state.IsKeyDown(Key.Up) ? Directions.Up : Directions.None;
             dirs |= state.IsKeyDown(Key.Down) ? Directions.Down : Directions.None;
@@ -252,6 +253,9 @@ namespace UniverGraphics
             label5.Text = "RIGHT: " + state.IsKeyDown(Key.Right).ToString();
             label6.Text = "PLUS: " + (state.IsKeyDown(Key.Plus) || state.IsKeyDown(Key.KeypadPlus)).ToString();
             label7.Text = "MINUS: " + (state.IsKeyDown(Key.Minus) || state.IsKeyDown(Key.KeypadMinus)).ToString();
+            label8.Text = "X: " + eye.X.ToString();
+            label9.Text = "Y: " + eye.Y.ToString();
+            label10.Text = "Z: " + eye.Z.ToString();
             camera.CurrentDirection = dirs;
             camera.Simulate(millisecondsElapsed);
             if (camera.ChangedCoordinates != string.Empty)

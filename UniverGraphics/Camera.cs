@@ -35,6 +35,7 @@ namespace UniverGraphics
         {
             GL.MatrixMode(MatrixMode.Modelview);
             GL.LoadIdentity();
+            
             Matrix4 modelview = Matrix4.LookAt(Eye, Target, Up);
             GL.LoadMatrix(ref modelview);
         }
