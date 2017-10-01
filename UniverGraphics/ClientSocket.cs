@@ -93,11 +93,11 @@ namespace UniverGraphics
 					CallDisconnect("Сервер закрыл соединение");
 				return;
 			}
+            clientStream.BeginRead(message, 0, message.Length, Listen, message);
 			message = res.AsyncState as byte[];
 			string messageString = Encoding.Default.GetString(message);
 			messageString = messageString.Substring(0, read);
 			OnReceive?.Invoke(messageString);
-			clientStream.BeginRead(message, 0, message.Length, Listen, message);
 		}
 
 		public void SendMessage(string message)

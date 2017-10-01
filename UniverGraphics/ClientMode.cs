@@ -21,7 +21,7 @@ namespace UniverGraphics
 			};
             client.OnConnected += () =>
             {
-                MainForm.Connected = true;
+                //MainForm.Connected = true;
             };
             client.OnDisconnect += (reason) =>
             {

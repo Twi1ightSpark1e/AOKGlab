@@ -20,7 +20,7 @@ namespace UniverGraphics
             };
 			server.OnConnected += (client) =>
 			{
-				server.SendTo(client, $"color{MainForm.ColorIndex}");
+                server.SendTo(client, $"color{MainForm.ColorIndex}");
 			};
             try
             {

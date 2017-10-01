@@ -7,6 +7,7 @@ using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 
 namespace UniverGraphics
 {
@@ -54,6 +55,11 @@ namespace UniverGraphics
                 LastInstance.nextButton.Enabled = LastInstance.autoChangeColorButton.Enabled = listening;
                 if (value)
                 {
+                    ServerMode.Server.OnConnected += (client) =>
+                    {
+                        Thread.Sleep(500);
+                        ServerMode.Server.SendTo(client, $"coords{lastSentCoordinates}");
+                    };
                     Application.Idle += LastInstance.mainForm_onIdle;
                     if (stopwatch == null)
                         stopwatch = Stopwatch.StartNew();
@@ -95,6 +101,7 @@ namespace UniverGraphics
         private static Camera camera;
         private static Stopwatch stopwatch;
         private static object locker = new object();
+        private static string lastSentCoordinates;
 
         public MainForm()
         {
@@ -112,7 +119,6 @@ namespace UniverGraphics
             for (int i = 0; i < houses.Length; i++)
             {
                 houses[i] = new LittleHome(angle -= 90, colors[i % colors.Count], multiplyList[i] * 3);
-                //angle -= 90;
             }
             camera = new Camera()
             {
@@ -179,28 +185,14 @@ namespace UniverGraphics
                 {
                     message = message.Remove(0, 6);
                     string[] coordinates = message.Split(';');
-                    foreach (string coordinate in coordinates)
-                    {
-                        Vector3 temp;
-                        switch (coordinate[0])
+                    camera.RadianX = float.Parse(coordinates[0]);
+                    camera.RadianY = float.Parse(coordinates[1]);
+                    camera.Radius = float.Parse(coordinates[2]);
+                    if (!Connected && !Listening)
+                        Invoke((MethodInvoker)delegate
                         {
-                            case 'x':
-                                temp = camera.Eye;
-                                temp.X = float.Parse(coordinate.Remove(0, 2));
-                                camera.Eye = temp;
-                                break;
-                            case 'y':
-                                temp = camera.Eye;
-                                temp.Y = float.Parse(coordinate.Remove(0, 2));
-                                camera.Eye = temp;
-                                break;
-                            case 'z':
-                                temp = camera.Eye;
-                                temp.Z = float.Parse(coordinate.Remove(0, 2));
-                                camera.Eye = temp;
-                                break;
-                        }
-                    }
+                            Connected = true;
+                        });
                 }
             }
         }
@@ -209,7 +201,10 @@ namespace UniverGraphics
         {
             serverButton.Enabled = addressTextBox.Enabled = connectButton.Enabled = false;
             ClientMode.Start(addressTextBox.Text);
-            ClientMode.Client.OnReceive += CoordinatesReceived;
+            ClientMode.Client.OnReceive += (message) =>
+            {
+                CoordinatesReceived(message);
+            };
             Text = "Лабораторная работа №2 (клиент)";
         }
 
@@ -262,12 +257,18 @@ namespace UniverGraphics
             label10.Text = "Z: " + eye.Z.ToString();
             camera.CurrentDirection = dirs;
             camera.Simulate(millisecondsElapsed);
-            if (camera.ChangedCoordinates != string.Empty)
+            if (camera.ChangedCoordinates != string.Empty && lastSentCoordinates != camera.ChangedCoordinates)
             {
                 if (Connected)
+                {
                     ClientMode.SendCoordinates(camera.ChangedCoordinates);
+                    lastSentCoordinates = camera.ChangedCoordinates;
+                }
                 else if (Listening)
+                {
                     ServerMode.SendCoordinatesAll(camera.ChangedCoordinates);
+                    lastSentCoordinates = camera.ChangedCoordinates;
+                }
             }
             glControl1.Invalidate();
             
