@@ -112,12 +112,18 @@ namespace UniverGraphics
             for (int i = 0; i < houses.Length; i++)
             {
                 houses[i] = new LittleHome(angle -= 90, colors[i % colors.Count], multiplyList[i] * 3);
+                //angle -= 90;
             }
             camera = new Camera()
             {
-                EyeOld = new Vector3(12, 0, 0),
+                Radius = 25f,
+                RadianX = 0f,
+                RadianY = 0f,
+                Eye    = new Vector3((float)(Math.Cos(0) * 25f * Math.Cos(0)), 
+                                     (float)(Math.Sin(0) * 25f), 
+                                     (float)(Math.Cos(0) * 25f * Math.Sin(0))),
                 Target = new Vector3( 0, 0, 0),
-                Up = new Vector3(0, 1, 0),
+                Up     = new Vector3( 0, 1, 0)
             };
         }
 
@@ -236,10 +242,8 @@ namespace UniverGraphics
         {
             float millisecondsElapsed = (float)stopwatch.Elapsed.TotalMilliseconds;
             stopwatch.Restart();
-            //Text = elapsedTicks.ToString();
             var state = Keyboard.GetState();
-            Vector3 eye = camera.Eye; 
-            Vector3 angle = camera.Angle; 
+            Vector3 eye = camera.Eye;
             Directions dirs = Directions.None;
             dirs |= state.IsKeyDown(Key.Up) ? Directions.Up : Directions.None;
             dirs |= state.IsKeyDown(Key.Down) ? Directions.Down : Directions.None;
@@ -252,7 +256,7 @@ namespace UniverGraphics
             label4.Text = "LEFT: " + state.IsKeyDown(Key.Left).ToString();
             label5.Text = "RIGHT: " + state.IsKeyDown(Key.Right).ToString();
             label6.Text = "PLUS: " + (state.IsKeyDown(Key.Plus) || state.IsKeyDown(Key.KeypadPlus)).ToString();
-            label7.Text = "angleX: " + angle.X.ToString();
+            label7.Text = "MINUS: " + (state.IsKeyDown(Key.Minus) || state.IsKeyDown(Key.KeypadMinus)).ToString();
             label8.Text = "X: " + eye.X.ToString();
             label9.Text = "Y: " + eye.Y.ToString();
             label10.Text = "Z: " + eye.Z.ToString();

@@ -23,15 +23,16 @@ namespace UniverGraphics
 
     class Camera
     {
+        public float RadianX { get; set; }
+        public float RadianY { get; set; }
+        public float Radius { get; set; }
         public Vector3 Eye { get; set; }
-        public Vector3 EyeOld { get; set; }
         public Vector3 Target { get; set; }
         public Vector3 Up { get; set; }
-        public Vector3 Angle { get; set; }
         public string ChangedCoordinates { get; private set; }
 
         public Directions CurrentDirection { get; set; }
-        public float Speed => 5f;
+        public float Speed => 3f;
 
         public void SetCamera()
         {
@@ -44,72 +45,42 @@ namespace UniverGraphics
 
         public void Simulate(float millisecondsElapsed)
         {
-
             Vector3 eye = Eye;
-            Vector3 target = Target;
-            Vector3 vNewView;
-            Vector3 vView;
-
-            // Получим наш вектор взгляда (направление, куда мы смотрим)
-            vView.X = target.X - eye.X;    //направление по X
-            vView.Y = target.Y - eye.Y;    //направление по Y
-            vView.Z = target.Z - eye.Z;    //направление по Z
-
             ChangedCoordinates = string.Empty;
-            if (CurrentDirection.HasFlag(Directions.Up))
-            {
-                eye.Y += Speed * millisecondsElapsed / 1000; //вверх
-                ChangedCoordinates += $"y={eye.Y};";
+            if (CurrentDirection.HasFlag(Directions.Up)) //вверх
+            { 
+                if (RadianY < 1.396)
+                    RadianY += 1.57f * millisecondsElapsed / 1000;
             }
-            if (CurrentDirection.HasFlag(Directions.Down))
+            if (CurrentDirection.HasFlag(Directions.Down)) //вниз
             {
-                eye.Y -= Speed * millisecondsElapsed / 1000; //вниз
-                ChangedCoordinates += $"y={eye.Y};";
+                if (RadianY > 0.0873)
+                    RadianY -= 1.57f * millisecondsElapsed / 1000;
             }
-            if (CurrentDirection.HasFlag(Directions.Left))
+            if (CurrentDirection.HasFlag(Directions.Left)) //влево
             {
-                float angle = Speed * millisecondsElapsed / 1000 * 2;
-                float x = 0;
-                float y = 1;
-                float z = 0;
-                float cosTheta = (float)Math.Cos(angle);
-                float sinTheta = (float)Math.Sin(angle);
-                // Найдем позицию X
-                eye.X = (cosTheta + (1 - cosTheta) * x * x) * vView.X;
-                eye.X += ((1 - cosTheta) * x * y - z * sinTheta) * vView.Y;
-                eye.X += ((1 - cosTheta) * x * z + y * sinTheta) * vView.Z;
-
-                // Найдем позицию Y
-                eye.Y = ((1 - cosTheta) * x * y + z * sinTheta) * vView.X;
-                eye.Y += (cosTheta + (1 - cosTheta) * y * y) * vView.Y;
-                eye.Y += ((1 - cosTheta) * y * z - x * sinTheta) * vView.Z;
-
-                // И позицию Z
-                eye.Z = ((1 - cosTheta) * x * z - y * sinTheta) * vView.X;
-                eye.Z += ((1 - cosTheta) * y * z + x * sinTheta) * vView.Y;
-                eye.Z += (cosTheta + (1 - cosTheta) * z * z) * vView.Z;
-                ChangedCoordinates += $"x={eye.X};";
-                ChangedCoordinates += $"y={eye.Y};";
-                ChangedCoordinates += $"z={eye.Z};";
+                RadianX += ((float)Math.PI / 2) * millisecondsElapsed / 1000;
             }
-            if (CurrentDirection.HasFlag(Directions.Right))
+            if (CurrentDirection.HasFlag(Directions.Right)) //вправо
+            { 
+                RadianX -= ((float)Math.PI / 2) * millisecondsElapsed / 1000;
+            }
+            if (CurrentDirection.HasFlag(Directions.Forward)) //приближаемся
             {
-                eye.Z -= Speed * millisecondsElapsed / 1000; //идём вправо
-                ChangedCoordinates += $"z={eye.Z};";
+                if (Radius > 10)
+                    Radius -= Speed * millisecondsElapsed / 1000;
             }
-            if (CurrentDirection.HasFlag(Directions.Forward))
+            if (CurrentDirection.HasFlag(Directions.Backward)) //отдаляемся
             {
-                eye.X -= Speed * millisecondsElapsed / 1000; //приближаемся
-                ChangedCoordinates += $"x={eye.X};";
+                if (Radius < 60)
+                {
+                    Radius += Speed * millisecondsElapsed / 1000;
+                }
             }
-            if (CurrentDirection.HasFlag(Directions.Backward))
-            {
-                eye.X += Speed * millisecondsElapsed / 1000; //отдаляемся
-                ChangedCoordinates += $"x={eye.X};";
-            }
-            ChangedCoordinates = ChangedCoordinates.Trim(';');
-            Eye = eye;
-            Target = target;
+            Eye = new Vector3((float)(Math.Cos(RadianY) * Radius * Math.Cos(RadianX)),
+                              (float)(Math.Sin(RadianY) * Radius),
+                              (float)(Math.Cos(RadianY) * Radius * Math.Sin(RadianX)));
+            ChangedCoordinates = $"x={eye.X};y={eye.Y};z={eye.Z}";
         }
     }
 }
