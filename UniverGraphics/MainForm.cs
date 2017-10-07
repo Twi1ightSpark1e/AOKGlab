@@ -8,6 +8,7 @@ using OpenTK.Input;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
+using System.Runtime.InteropServices;
 
 namespace UniverGraphics
 {
@@ -102,6 +103,9 @@ namespace UniverGraphics
         private static Stopwatch stopwatch;
         private static object locker = new object();
         private static string lastSentCoordinates;
+        
+        public static int IdVb { get; private set; }
+        public static int IdIb { get; private set; }
 
         public MainForm()
         {
@@ -275,9 +279,97 @@ namespace UniverGraphics
             //log.Add($"UP: {state.IsKeyDown(Key.Up).ToString():6} DOWN: {state.IsKeyDown(Key.Down).ToString():6} LEFT: {state.IsKeyDown(Key.Left).ToString():6} RIGHT: {state.IsKeyDown(Key.Right).ToString():6} PLUS: {(state.IsKeyDown(Key.Plus) || state.IsKeyDown(Key.KeypadPlus)).ToString():6} MINUS: {(state.IsKeyDown(Key.Minus) || state.IsKeyDown(Key.KeypadMinus)).ToString():6} X: {camera.Eye.X} Y: {camera.Eye.Y} Z: {camera.Eye.Z}");
         }
 
+        public struct ModelPoint
+        {
+            Vector3 coordinates;
+            //byte[] colors;
+
+            public ModelPoint((float x, float y, float z) coordinates, (byte r, byte g, byte b) colors)
+            {
+                this.coordinates = new Vector3(coordinates.x, coordinates.y, coordinates.z);
+                //this.colors = new byte[] { colors.r, colors.g, colors.b };
+            }
+
+            public static int Size()
+            {
+                //return Marshal.SizeOf<ModelPoint>();
+                return Vector3.SizeInBytes/* + (sizeof(byte) * 3)*/;
+            }
+
+            public static IntPtr CoordinatesOffset()
+            {
+                return Marshal.OffsetOf<ModelPoint>(nameof(coordinates));
+            }
+
+            public static IntPtr ColorsOffset()
+            {
+                return Marshal.OffsetOf<ModelPoint>(nameof(colors));
+            }
+        };
+        public static ModelPoint[] points = new ModelPoint[]
+        {
+            //нижняя панель
+            new ModelPoint((-1, 0, -1), (255, 255, 255)),
+            new ModelPoint((-1, 0, 1), (255, 255, 255)),
+            new ModelPoint((1, 0, -1), (255, 255, 255)),
+            new ModelPoint((1, 0, 1), (255, 255, 255)),
+            //правая панель
+            new ModelPoint((1, 0, 1), (255, 0, 0)),
+            new ModelPoint((1, 0, -1), (255, 0, 0)),
+            new ModelPoint((1, 2, 1), (255, 0, 0)),
+            new ModelPoint((1, 2, 1), (255, 0, 0)),
+            new ModelPoint((1, 0, -1), (255, 0, 0)),
+            new ModelPoint((1, 2, -1), (255, 0, 0)),
+            //левая панель
+            new ModelPoint((-1, 0, -1), (0, 255, 0)),
+            new ModelPoint((-1, 0, 1), (0, 255, 0)),
+            new ModelPoint((-1, 2, -1), (0, 255, 0)),
+            new ModelPoint((-1, 2, -1), (0, 255, 0)),
+            new ModelPoint((-1, 0, 1), (0, 255, 0)),
+            new ModelPoint((-1, 2, 1), (0, 255, 0)),
+            //верхняя панель
+            new ModelPoint((-1, 2, -1), (0, 0, 255)),
+            new ModelPoint((-1, 2, 1), (0, 0, 255)),
+            new ModelPoint((1, 2, -1), (0, 0, 255)),
+            new ModelPoint((1, 2, -1), (0, 0, 255)),
+            new ModelPoint((-1, 2, 1), (0, 0, 255)),
+            new ModelPoint((1, 2, 1), (0, 0, 255)),
+            //передняя панель
+            new ModelPoint((-1, 2, 1), (255, 255, 0)),
+            new ModelPoint((-1, 0, 1), (255, 255, 0)),
+            new ModelPoint((1, 0, 1), (255, 255, 0)),
+            new ModelPoint((-1, 2, 1), (255, 255, 0)),
+            new ModelPoint((1, 0, 1), (255, 255, 0)),
+            new ModelPoint((1, 2, 1), (255, 255, 0)),
+            //задняя панель
+            new ModelPoint((-1, 0, -1), (255, 0, 255)),
+            new ModelPoint((1, 0, -1), (255, 0, 255)),
+            new ModelPoint((1, 2, -1), (255, 0, 255)),
+            new ModelPoint((-1, 2, -1), (255, 0, 255)),
+            new ModelPoint((-1, 0, -1), (255, 0, 255)),
+            new ModelPoint((1, 2, -1), (255, 0, 255)),
+        };
+
+        public static uint[] indices = new uint[]
+        {
+            0, 1, 2, 2, 1, 3, //нижняя панель
+
+        };
+
         private void glControl1_Load(object sender, EventArgs e)
         {
             GL.Enable(EnableCap.DepthTest);
+            
+            int[] bufs = new int[2];
+            GL.GenBuffers(2, bufs);
+            IdVb = bufs[0];
+            IdIb = bufs[1];
+            GL.BindBuffer(BufferTarget.ArrayBuffer, IdVb);
+            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(points.Length * ModelPoint.Size()), points, BufferUsageHint.StaticDraw);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, IdIb);
+            GL.EnableVertexAttribArray(0);
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, ModelPoint.Size(), 0);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(indices.Length * sizeof(uint)), indices, BufferUsageHint.StaticDraw);
         }
 
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
