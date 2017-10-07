@@ -28,7 +28,7 @@ namespace UniverGraphics
         public string ChangedCoordinates { get; private set; }
 
         public Directions CurrentDirection { get; set; }
-        public float Speed => 1f;
+        public float Speed => 2f;
 
         public void SetCamera()
         {
@@ -53,12 +53,12 @@ namespace UniverGraphics
             if (CurrentDirection.HasFlag(Directions.Up)) //вверх
             { 
                 if (RadianY < 1.396)
-                    RadianY += Speed / 2 * millisecondsElapsed / 1000;
+                    RadianY += (float)Math.Sqrt(Speed) * millisecondsElapsed / 1000;
             }
             if (CurrentDirection.HasFlag(Directions.Down)) //вниз
             {
                 if (RadianY > /*0.0873*/-1.396)
-                    RadianY -= Speed / 2 * millisecondsElapsed / 1000;
+                    RadianY -= (float)Math.Sqrt(Speed) * millisecondsElapsed / 1000;
             }
             if (CurrentDirection.HasFlag(Directions.Left)) //влево
             {
@@ -71,12 +71,12 @@ namespace UniverGraphics
             if (CurrentDirection.HasFlag(Directions.Forward)) //приближаемся
             {
                 if (Radius > 10)
-                    Radius -= 3 * Speed * millisecondsElapsed / 1000;
+                    Radius -= (float)Math.Pow(Speed, 4) * millisecondsElapsed / 1000;
             }
             if (CurrentDirection.HasFlag(Directions.Backward)) //отдаляемся
             {
-                if (Radius < 60)
-                    Radius += 3 * Speed * millisecondsElapsed / 1000;
+                if (Radius < 100)
+                    Radius += (float)Math.Pow(Speed, 4) * millisecondsElapsed / 1000;
             }
             ChangedCoordinates = $"{RadianX};{RadianY};{Radius}";
         }

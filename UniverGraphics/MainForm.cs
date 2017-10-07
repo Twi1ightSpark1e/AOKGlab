@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Runtime.InteropServices;
+using System.Linq;
 
 namespace UniverGraphics
 {
@@ -103,32 +104,17 @@ namespace UniverGraphics
         private static Stopwatch stopwatch;
         private static object locker = new object();
         private static string lastSentCoordinates;
-        
-        public static int IdVb { get; private set; }
-        public static int IdIb { get; private set; }
 
         public MainForm()
         {
             LastInstance = this;
             InitializeComponent();
-
-            List<Vector3> multiplyList = new List<Vector3>()
-            {
-                new Vector3(1, 0, -1),
-                new Vector3(1, 0, 1),
-                new Vector3(-1, 0, 1),
-                new Vector3(-1, 0, -1)
-            };
-            int angle = -45;
-            for (int i = 0; i < houses.Length; i++)
-            {
-                houses[i] = new LittleHome(angle -= 90, colors[i % colors.Count], multiplyList[i] * 3);
-            }
+            
             camera = new Camera()
             {
-                Radius = 25f,
-                RadianX = 0f,
-                RadianY = 0f,
+                Radius = 70f,
+                RadianX = 1f,
+                RadianY = 1f,
                 Eye    = new Vector3((float)(Math.Cos(0) * 25f * Math.Cos(0)), 
                                      (float)(Math.Sin(0) * 25f), 
                                      (float)(Math.Cos(0) * 25f * Math.Sin(0))),
@@ -280,92 +266,37 @@ namespace UniverGraphics
             //log.Add($"UP: {state.IsKeyDown(Key.Up).ToString():6} DOWN: {state.IsKeyDown(Key.Down).ToString():6} LEFT: {state.IsKeyDown(Key.Left).ToString():6} RIGHT: {state.IsKeyDown(Key.Right).ToString():6} PLUS: {(state.IsKeyDown(Key.Plus) || state.IsKeyDown(Key.KeypadPlus)).ToString():6} MINUS: {(state.IsKeyDown(Key.Minus) || state.IsKeyDown(Key.KeypadMinus)).ToString():6} X: {camera.Eye.X} Y: {camera.Eye.Y} Z: {camera.Eye.Z}");
         }
 
-        public struct ModelPoint
-        {
-            Vector3 coordinates, colors;
-
-            public ModelPoint((float x, float y, float z) coordinates, (byte r, byte g, byte b) colors)
-            {
-                this.coordinates = new Vector3(coordinates.x, coordinates.y, coordinates.z);
-                this.colors = new Vector3(colors.r, colors.g, colors.b);
-            }
-
-            public static int Size()
-            {
-                return Vector3.SizeInBytes * 2;
-            }
-
-            public static IntPtr CoordinatesOffset()
-            {
-                return Marshal.OffsetOf<ModelPoint>("coordinates");
-            }
-
-            public static IntPtr ColorsOffset()
-            {
-                return Marshal.OffsetOf<ModelPoint>("colors");
-            }
-        };
-        public static ModelPoint[] points = new ModelPoint[]
-        {
-             //front
-            new ModelPoint((-1, -1 , 1), (1, 1, 1)),
-            new ModelPoint((1, -1, 1), (1, 1, 1)),
-            new ModelPoint((1, 1, 1), (1, 1, 1)),
-            new ModelPoint((-1, 1, 1), (1, 1, 1)),
-            //right
-            new ModelPoint((1, 1, 1), (1, 0, 0)),
-            new ModelPoint((1, 1, -1), (1, 0, 0)),
-            new ModelPoint((1, -1, -1), (1, 0, 0)),
-            new ModelPoint((1, -1, 1), (1, 0, 0)),
-            //back
-            new ModelPoint((-1, -1, -1), (0, 1, 0)),
-            new ModelPoint((1, -1, -1), (0, 1, 0)),
-            new ModelPoint(( 1, 1, -1), (0, 1, 0)),
-            new ModelPoint((-1, 1, -1), (0, 1, 0)),
-            //left
-            new ModelPoint((-1, -1, -1), (0, 0, 1)),
-            new ModelPoint((-1, -1, 1), (0, 0, 1)),
-            new ModelPoint((-1, 1, 1), (0, 0, 1)),
-            new ModelPoint((-1, 1, -1), (0, 0, 1)),
-            //upper
-            new ModelPoint(( 1, 1, 1), (1, 1, 0)),
-            new ModelPoint((-1, 1, 1), (1, 1, 0)),
-            new ModelPoint((-1, 1, -1), (1, 1, 0)),
-            new ModelPoint((1, 1, -1), (1, 1, 0)),
-            //bottom
-            new ModelPoint((-1, -1, -1), (1, 0, 1)),
-            new ModelPoint((1, -1, -1), (1, 0, 1)),
-            new ModelPoint(( 1, -1, 1), (1, 0, 1)),
-            new ModelPoint((-1, -1, 1), (1, 0, 1)),
-        };
-
-        public static uint[] indices = new uint[]
-        {
-            0,  1,  2,  0,  2,  3,   //front
-            6,  5,  4,  7,  6,  4,   //right
-            10, 9,  8,  11, 10, 8,   //back
-            12, 13, 14, 12, 14, 15,  //left
-            18, 17, 16, 19, 18, 16,  //upper
-            20, 21, 22, 20, 22, 23   //bottom
-        };
-
         private void glControl1_Load(object sender, EventArgs e)
         {
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.CullFace);
             GL.FrontFace(FrontFaceDirection.Ccw);
             GL.CullFace(CullFaceMode.Back);
-            
-            int[] bufs = new int[2];
-            GL.GenBuffers(2, bufs);
-            IdVb = bufs[0];
-            IdIb = bufs[1];
-            GL.BindBuffer(BufferTarget.ArrayBuffer, IdVb);
-            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(points.Length * ModelPoint.Size()), points, BufferUsageHint.StaticDraw);
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, IdIb);
-            GL.EnableVertexAttribArray(0);
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, ModelPoint.Size(), 0);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(indices.Length * sizeof(uint)), indices, BufferUsageHint.StaticDraw);
+
+            List<LittleHome> houses = new List<LittleHome>();
+            try
+            {
+                StreamReader sr = new StreamReader("map.txt");
+                int lines = 0;
+                Random rnd = new Random();
+                while (!sr.EndOfStream)
+                {
+                    string line = sr.ReadLine();
+                    for (int i = 0; i < line.Length; i++)
+                    {
+                        ShapeMode mode = (ShapeMode)Enum.Parse(typeof(ShapeMode), line[i].ToString());
+                        houses.Add(new LittleHome(0, (0, 0, 0), new Vector3((i - line.Length / 2) * 2, 0, (lines - line.Length / 2)*2), mode));
+                    }
+                    lines++;
+                }
+                sr.Close();
+                MainForm.houses = houses.ToArray();
+            }
+            catch (FileNotFoundException)
+            {
+                MessageBox.Show("Файл карты проходимости не найден");
+                Application.Exit();
+            }
         }
 
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)

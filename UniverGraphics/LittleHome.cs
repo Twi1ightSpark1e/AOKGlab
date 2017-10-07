@@ -10,17 +10,48 @@ using OpenTK.Graphics.OpenGL;
 
 namespace UniverGraphics
 {
+    enum ShapeMode
+    {
+        Flat, Cube, Parallelepiped
+    }
+
     class LittleHome
     {
         public int Angle { get; set; }
         public (byte red, byte green, byte blue) Color { get; set; }
         public Vector3 TranslateVector { get; set; }
+        public ShapeMode Shape { get; set; }
+        public ModelPoint[] Vertexes { get; private set; }
+        public uint[] Indices { get; private set; }
+        public int IdVb { get; private set; }
+        public int IdIb { get; private set; }
 
-        public LittleHome(int angle, (byte red, byte green, byte blue) color, Vector3 translate)
+        public LittleHome(int angle, (byte red, byte green, byte blue) color, Vector3 translate, ShapeMode shape)
         {
             Angle = angle;
             Color = color;
             TranslateVector = translate;
+            Shape = shape;
+            switch (shape)
+            {
+                case ShapeMode.Flat:
+                    Vertexes = ShapeArrays.FlatPoints;
+                    Indices = ShapeArrays.FlatIndices;
+                    break;
+                case ShapeMode.Cube:
+                    Vertexes = ShapeArrays.CubePoints;
+                    Indices = ShapeArrays.CubeIndices;
+                    break;
+                case ShapeMode.Parallelepiped:
+                    Vertexes = ShapeArrays.ParallelepipedPoints;
+                    Indices = ShapeArrays.ParallelepipedIndices;
+                    break;
+                default:
+                    Vertexes = ShapeArrays.FlatPoints;
+                    Indices = ShapeArrays.FlatIndices;
+                    break;
+            }
+            InitializeVBO();
         }
 
         public void Show()
@@ -36,17 +67,29 @@ namespace UniverGraphics
 
             GL.EnableClientState(ArrayCap.VertexArray);
             GL.EnableClientState(ArrayCap.ColorArray);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, MainForm.IdVb);
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, MainForm.IdIb);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, IdVb);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, IdIb);
             GL.EnableVertexAttribArray(0);
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, MainForm.ModelPoint.Size(), MainForm.ModelPoint.CoordinatesOffset());
-            GL.ColorPointer(3, ColorPointerType.Float, MainForm.ModelPoint.Size(), MainForm.ModelPoint.ColorsOffset());
-            GL.DrawElements(PrimitiveType.Triangles, MainForm.indices.Length, DrawElementsType.UnsignedInt, 0);
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, ModelPoint.Size(), ModelPoint.CoordinatesOffset());
+            GL.ColorPointer(3, ColorPointerType.Float, ModelPoint.Size(), ModelPoint.ColorsOffset());
+            GL.DrawElements(PrimitiveType.Triangles, Indices.Length, DrawElementsType.UnsignedInt, 0);
             GL.DisableClientState(ArrayCap.VertexArray);
             GL.DisableClientState(ArrayCap.ColorArray);
 
             //PaintCube();
             GL.PopMatrix();
+        }
+
+        public void InitializeVBO()
+        {
+            IdVb = GL.GenBuffer();
+            IdIb = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, IdVb);
+            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(Vertexes.Length * ModelPoint.Size()), Vertexes, BufferUsageHint.StaticDraw);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, IdIb);
+            GL.EnableVertexAttribArray(0);
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, ModelPoint.Size(), 0);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(Indices.Length * sizeof(uint)), Indices, BufferUsageHint.StaticDraw);
         }
     }
 }
