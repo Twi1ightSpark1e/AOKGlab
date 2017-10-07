@@ -163,7 +163,8 @@ namespace UniverGraphics
         private void glControl1_Paint(object sender, PaintEventArgs e)
         {
             //Установим фоновый цвет
-            GL.ClearColor(new OpenTK.Graphics.Color4(105, 29, 142, 0));
+            //GL.ClearColor(new OpenTK.Graphics.Color4(105, 29, 142, 0)); //сиреневый цвет
+            GL.ClearColor(new OpenTK.Graphics.Color4(0, 0, 0, 0));
             //Не будем ничего рисовать, пока не подключимся к серверу
             if (Connected || Listening)
             {
@@ -281,73 +282,71 @@ namespace UniverGraphics
 
         public struct ModelPoint
         {
-            Vector3 coordinates;
-            //byte[] colors;
+            Vector3 coordinates, colors;
 
             public ModelPoint((float x, float y, float z) coordinates, (byte r, byte g, byte b) colors)
             {
                 this.coordinates = new Vector3(coordinates.x, coordinates.y, coordinates.z);
-                //this.colors = new byte[] { colors.r, colors.g, colors.b };
+                this.colors = new Vector3(colors.r, colors.g, colors.b);
             }
 
             public static int Size()
             {
-                //return Marshal.SizeOf<ModelPoint>();
-                return Vector3.SizeInBytes/* + (sizeof(byte) * 3)*/;
+                return Vector3.SizeInBytes * 2;
             }
 
             public static IntPtr CoordinatesOffset()
             {
-                return Marshal.OffsetOf<ModelPoint>(nameof(coordinates));
+                return Marshal.OffsetOf<ModelPoint>("coordinates");
             }
 
             public static IntPtr ColorsOffset()
             {
-                return Marshal.OffsetOf<ModelPoint>(nameof(colors));
+                return Marshal.OffsetOf<ModelPoint>("colors");
             }
         };
         public static ModelPoint[] points = new ModelPoint[]
         {
             //нижняя панель
-            new ModelPoint((-1, 0, -1), (255, 255, 255)),
-            new ModelPoint((-1, 0, 1), (255, 255, 255)),
-            new ModelPoint((1, 0, -1), (255, 255, 255)),
-            new ModelPoint((1, 0, 1), (255, 255, 255)),
+            new ModelPoint((-1, 0, -1), (1, 1, 1)),
+            new ModelPoint((-1, 0, 1), (1, 1, 1)),
+            new ModelPoint((1, 0, -1), (1, 1, 1)),
+            new ModelPoint((1, 0, 1), (1, 1, 1)),
             //правая панель
-            new ModelPoint((1, 0, 1), (255, 0, 0)),
-            new ModelPoint((1, 0, -1), (255, 0, 0)),
-            new ModelPoint((1, 2, 1), (255, 0, 0)),
-            new ModelPoint((1, 2, 1), (255, 0, 0)),
-            new ModelPoint((1, 0, -1), (255, 0, 0)),
-            new ModelPoint((1, 2, -1), (255, 0, 0)),
+            new ModelPoint((1, 0, 1), (1, 0, 0)),
+            new ModelPoint((1, 0, -1), (1, 0, 0)),
+            new ModelPoint((1, 2, 1), (1, 0, 0)),
+            new ModelPoint((1, 2, 1), (1, 0, 0)),
+            new ModelPoint((1, 0, -1), (1, 0, 0)),
+            new ModelPoint((1, 2, -1), (1, 0, 0)),
             //левая панель
-            new ModelPoint((-1, 0, -1), (0, 255, 0)),
-            new ModelPoint((-1, 0, 1), (0, 255, 0)),
-            new ModelPoint((-1, 2, -1), (0, 255, 0)),
-            new ModelPoint((-1, 2, -1), (0, 255, 0)),
-            new ModelPoint((-1, 0, 1), (0, 255, 0)),
-            new ModelPoint((-1, 2, 1), (0, 255, 0)),
+            new ModelPoint((-1, 0, -1), (0, 1, 0)),
+            new ModelPoint((-1, 0, 1), (0, 1, 0)),
+            new ModelPoint((-1, 2, -1), (0, 1, 0)),
+            new ModelPoint((-1, 2, -1), (0, 1, 0)),
+            new ModelPoint((-1, 0, 1), (0, 1, 0)),
+            new ModelPoint((-1, 2, 1), (0, 1, 0)),
             //верхняя панель
-            new ModelPoint((-1, 2, -1), (0, 0, 255)),
-            new ModelPoint((-1, 2, 1), (0, 0, 255)),
-            new ModelPoint((1, 2, -1), (0, 0, 255)),
-            new ModelPoint((1, 2, -1), (0, 0, 255)),
-            new ModelPoint((-1, 2, 1), (0, 0, 255)),
-            new ModelPoint((1, 2, 1), (0, 0, 255)),
+            new ModelPoint((-1, 2, -1), (0, 0, 1)),
+            new ModelPoint((-1, 2, 1), (0, 0, 1)),
+            new ModelPoint((1, 2, -1), (0, 0, 1)),
+            new ModelPoint((1, 2, -1), (0, 0, 1)),
+            new ModelPoint((-1, 2, 1), (0, 0, 1)),
+            new ModelPoint((1, 2, 1), (0, 0, 1)),
             //передняя панель
-            new ModelPoint((-1, 2, 1), (255, 255, 0)),
-            new ModelPoint((-1, 0, 1), (255, 255, 0)),
-            new ModelPoint((1, 0, 1), (255, 255, 0)),
-            new ModelPoint((-1, 2, 1), (255, 255, 0)),
-            new ModelPoint((1, 0, 1), (255, 255, 0)),
-            new ModelPoint((1, 2, 1), (255, 255, 0)),
+            new ModelPoint((-1, 2, 1), (1, 1, 0)),
+            new ModelPoint((-1, 0, 1), (1, 1, 0)),
+            new ModelPoint((1, 0, 1), (1, 1, 0)),
+            new ModelPoint((-1, 2, 1), (1, 1, 0)),
+            new ModelPoint((1, 0, 1), (1, 1, 0)),
+            new ModelPoint((1, 2, 1), (1, 1, 0)),
             //задняя панель
-            new ModelPoint((-1, 0, -1), (255, 0, 255)),
-            new ModelPoint((1, 0, -1), (255, 0, 255)),
-            new ModelPoint((1, 2, -1), (255, 0, 255)),
-            new ModelPoint((-1, 2, -1), (255, 0, 255)),
-            new ModelPoint((-1, 0, -1), (255, 0, 255)),
-            new ModelPoint((1, 2, -1), (255, 0, 255)),
+            new ModelPoint((-1, 0, -1), (1, 0, 1)),
+            new ModelPoint((1, 0, -1), (1, 0, 1)),
+            new ModelPoint((1, 2, -1), (1, 0, 1)),
+            new ModelPoint((-1, 2, -1), (1, 0, 1)),
+            new ModelPoint((-1, 0, -1), (1, 0, 1)),
+            new ModelPoint((1, 2, -1), (1, 0, 1)),
         };
 
         public static uint[] indices = new uint[]

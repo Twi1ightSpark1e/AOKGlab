@@ -29,102 +29,24 @@ namespace UniverGraphics
             GL.Translate(TranslateVector);
             GL.Rotate(Angle, 0, 1, 0);
             //Установим цвет фигуры
-            GL.Color3(Color.red, Color.green, Color.blue);
+            //GL.Color3(Color.red, Color.green, Color.blue);
             //Нарисуем фигуру
-            // PaintLittleHome();
+            //PaintLittleHome();
             //Teapot.DrawWireTeapot(1.0f);
 
             GL.EnableClientState(ArrayCap.VertexArray);
+            GL.EnableClientState(ArrayCap.ColorArray);
             GL.BindBuffer(BufferTarget.ArrayBuffer, MainForm.IdVb);
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, MainForm.IdIb);
             GL.EnableVertexAttribArray(0);
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, MainForm.ModelPoint.Size(), 0);
-            //GL.DrawArrays(PrimitiveType.Triangles, 0, MainForm.points.Length);
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, MainForm.ModelPoint.Size(), MainForm.ModelPoint.CoordinatesOffset());
+            GL.ColorPointer(3, ColorPointerType.Float, MainForm.ModelPoint.Size(), MainForm.ModelPoint.ColorsOffset());
             GL.DrawElements(PrimitiveType.Triangles, MainForm.indices.Length, DrawElementsType.UnsignedInt, 0);
             GL.DisableClientState(ArrayCap.VertexArray);
+            GL.DisableClientState(ArrayCap.ColorArray);
 
             //PaintCube();
             GL.PopMatrix();
-        }
-
-        private void PaintLittleHome()
-        {
-            //поверхность 1
-            GL.Begin(BeginMode.LineLoop);
-            GL.Vertex3(1, 1, -1);
-            GL.Vertex3(1, -1, -1);
-            GL.Vertex3(-1, -1, -1);
-            GL.Vertex3(-1, 1, -1);
-            GL.End();
-            //поверхность 2
-            GL.Begin(BeginMode.LineLoop);
-            GL.Vertex3(-1, -1, -1);
-            GL.Vertex3(1, -1, -1);
-            GL.Vertex3(1, -1, 1);
-            GL.Vertex3(-1, -1, 1);
-            GL.End();
-            //поверхность 3
-            GL.Begin(BeginMode.LineLoop);
-            GL.Vertex3(-1, 1, -1);
-            GL.Vertex3(-1, -1, -1);
-            GL.Vertex3(-1, -1, 1);
-            GL.Vertex3(-1, 1, 1);
-            GL.End();
-            //поверхность 4
-            GL.Begin(BeginMode.LineLoop);
-            GL.Vertex3(1, 1, 1);
-            GL.Vertex3(1, -1, 1);
-            GL.Vertex3(1, -1, -1);
-            GL.Vertex3(1, 1, -1);
-            GL.End();
-            //поверхность 5
-            GL.Begin(BeginMode.LineLoop);
-            GL.Vertex3(-1, 1, -1);
-            GL.Vertex3(-1, 1, 1);
-            GL.Vertex3(1, 1, 1);
-            GL.Vertex3(1, 1, -1);
-            GL.End();
-            //поверхность 6
-            GL.Begin(BeginMode.LineLoop);
-            GL.Vertex3(-1, 1, 1);
-            GL.Vertex3(-1, -1, 1);
-            GL.Vertex3(1, -1, 1);
-            GL.Vertex3(1, 1, 1);
-            GL.End();
-            ///направляющая пирамида
-            //поверхность 1
-            GL.Begin(BeginMode.LineLoop);
-            GL.Vertex3(1, 1, 1);
-            GL.Vertex3(2, 0, 0);
-            GL.Vertex3(1, -1, 1);
-            GL.End();
-            //поверхность 2
-            GL.Begin(BeginMode.LineLoop);
-            GL.Vertex3(1, -1, 1);
-            GL.Vertex3(2, 0, 0);
-            GL.Vertex3(1, -1, -1);
-            GL.End();
-            //поверхность 3
-            GL.Begin(BeginMode.LineLoop);
-            GL.Vertex3(1, -1, -1);
-            GL.Vertex3(2, 0, 0);
-            GL.Vertex3(1, 1, -1);
-            GL.End();
-        }
-
-        private void PaintCube()
-        {
-            GL.Begin(PrimitiveType.Triangles);
-            GL.Vertex3(-1, 0, -1);
-            GL.Vertex3(-1, 0, 1);
-            GL.Vertex3(1, 0, 1);
-            GL.End();
-
-            GL.Begin(PrimitiveType.Triangles);
-            GL.Vertex3(1, 0, 1);
-            GL.Vertex3(1, 0, -1);
-            GL.Vertex3(-1, 0, -1);
-            GL.End();
         }
     }
 }
