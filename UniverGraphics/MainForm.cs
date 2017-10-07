@@ -308,52 +308,53 @@ namespace UniverGraphics
         public static ModelPoint[] points = new ModelPoint[]
         {
              //front
-            new ModelPoint((-1, -1 , -1), (255, 255, 255)),
-            new ModelPoint((1, -1, 1), (255, 255, 255)),
-            new ModelPoint((1, 1, 1), (255, 255, 255)),
-            new ModelPoint((-1, 1, -1), (255, 255, 255)),
+            new ModelPoint((-1, -1 , 1), (1, 1, 1)),
+            new ModelPoint((1, -1, 1), (1, 1, 1)),
+            new ModelPoint((1, 1, 1), (1, 1, 1)),
+            new ModelPoint((-1, 1, 1), (1, 1, 1)),
             //right
-            new ModelPoint((1, 1, 1), (255, 0, 0)),
-            new ModelPoint((1, 1, -1), (255, 0, 0)),
-            new ModelPoint((1, -1, -1), (255, 0, 0)),
-            new ModelPoint((1, -1, 1), (255, 0, 0)),
-            
+            new ModelPoint((1, 1, 1), (1, 0, 0)),
+            new ModelPoint((1, 1, -1), (1, 0, 0)),
+            new ModelPoint((1, -1, -1), (1, 0, 0)),
+            new ModelPoint((1, -1, 1), (1, 0, 0)),
             //back
-            new ModelPoint((-1, -1, -1), (0, 255, 0)),
-            new ModelPoint((1, -1, -1), (0, 255, 0)),
-            new ModelPoint(( 1, 1, -1), (0, 255, 0)),
-            new ModelPoint((-1, 1, -1), (0, 255, 0)),
+            new ModelPoint((-1, -1, -1), (0, 1, 0)),
+            new ModelPoint((1, -1, -1), (0, 1, 0)),
+            new ModelPoint(( 1, 1, -1), (0, 1, 0)),
+            new ModelPoint((-1, 1, -1), (0, 1, 0)),
             //left
-            new ModelPoint((-1, -1, -1), (0, 0, 255)),
-            new ModelPoint((-1, -1, 1), (0, 0, 255)),
-            new ModelPoint((-1, 1, 1), (0, 0, 255)),
-            new ModelPoint((-1, 1, -1), (0, 0, 255)),
+            new ModelPoint((-1, -1, -1), (0, 0, 1)),
+            new ModelPoint((-1, -1, 1), (0, 0, 1)),
+            new ModelPoint((-1, 1, 1), (0, 0, 1)),
+            new ModelPoint((-1, 1, -1), (0, 0, 1)),
             //upper
-            new ModelPoint(( 1, 1, 1), (255, 255, 0)),
-            new ModelPoint((-1, 1, 1), (255, 255, 0)),
-            new ModelPoint((-1, 1, -1), (255, 255, 0)),
-            new ModelPoint((1, 1, -1), (255, 255, 0)),
+            new ModelPoint(( 1, 1, 1), (1, 1, 0)),
+            new ModelPoint((-1, 1, 1), (1, 1, 0)),
+            new ModelPoint((-1, 1, -1), (1, 1, 0)),
+            new ModelPoint((1, 1, -1), (1, 1, 0)),
             //bottom
-            new ModelPoint((-1, -1, -1), (255, 0, 255)),
-            new ModelPoint((1, -1, -1), (255, 0, 255)),
-            new ModelPoint(( 1, -1, 1), (255, 0, 255)),
-            new ModelPoint((-1, -1, 1), (255, 0, 255)),
+            new ModelPoint((-1, -1, -1), (1, 0, 1)),
+            new ModelPoint((1, -1, -1), (1, 0, 1)),
+            new ModelPoint(( 1, -1, 1), (1, 0, 1)),
+            new ModelPoint((-1, -1, 1), (1, 0, 1)),
         };
 
         public static uint[] indices = new uint[]
         {
             0,  1,  2,  0,  2,  3,   //front
-            4,  5,  6,  4,  6,  7,   //right
-            8,  9,  10, 8,  10, 11,  //back
+            6,  5,  4,  7,  6,  4,   //right
+            10, 9,  8,  11, 10, 8,   //back
             12, 13, 14, 12, 14, 15,  //left
-            16, 17, 18, 16, 18, 19,  //upper
+            18, 17, 16, 19, 18, 16,  //upper
             20, 21, 22, 20, 22, 23   //bottom
-
         };
 
         private void glControl1_Load(object sender, EventArgs e)
         {
             GL.Enable(EnableCap.DepthTest);
+            GL.Enable(EnableCap.CullFace);
+            GL.FrontFace(FrontFaceDirection.Ccw);
+            GL.CullFace(CullFaceMode.Back);
             
             int[] bufs = new int[2];
             GL.GenBuffers(2, bufs);

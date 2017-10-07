@@ -57,7 +57,7 @@ namespace UniverGraphics
             }
             if (CurrentDirection.HasFlag(Directions.Down)) //вниз
             {
-                if (RadianY > 0.0873)
+                if (RadianY > /*0.0873*/-1.396)
                     RadianY -= Speed / 2 * millisecondsElapsed / 1000;
             }
             if (CurrentDirection.HasFlag(Directions.Left)) //влево

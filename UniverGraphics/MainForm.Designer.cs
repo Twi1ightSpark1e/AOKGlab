@@ -30,7 +30,7 @@
         {
             this.components = new System.ComponentModel.Container();
             this.nextButton = new System.Windows.Forms.Button();
-            this.glControl1 = new OpenTK.GLControl();
+            this.glControl1 = new OpenTK.GLControl(new OpenTK.Graphics.GraphicsMode(new OpenTK.Graphics.ColorFormat(32), 24, 0, 8));
             this.label1 = new System.Windows.Forms.Label();
             this.addressTextBox = new System.Windows.Forms.TextBox();
             this.connectButton = new System.Windows.Forms.Button();
