@@ -25,7 +25,7 @@ namespace UniverGraphics
         public (byte red, byte green, byte blue) Color { get; set; }
         public Vector3 TranslateVector { get; set; }
         public ShapeMode Shape { get; set; }
-        public OutputMode Output { get; set; }
+        public static OutputMode Output { get; set; }
         public ModelPoint[] Vertexes { get; private set; }
         public uint[] Indices { get; private set; }
         public int IdVb { get; private set; }
@@ -64,9 +64,6 @@ namespace UniverGraphics
             GL.PushMatrix();
             GL.Translate(TranslateVector);
             GL.Rotate(Angle, 0, 1, 0);
-            //GL.Color3(Color.red, Color.green, Color.blue);
-            //PaintGraphicObject();
-            //Teapot.DrawWireTeapot(1.0f);
 
             GL.EnableClientState(ArrayCap.VertexArray);
             GL.EnableClientState(ArrayCap.ColorArray);
@@ -89,8 +86,7 @@ namespace UniverGraphics
             }
             GL.DisableClientState(ArrayCap.VertexArray);
             GL.DisableClientState(ArrayCap.ColorArray);
-
-            //PaintCube();
+            
             GL.PopMatrix();
         }
 

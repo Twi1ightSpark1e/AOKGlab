@@ -9,7 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace UniverGraphics
+namespace Server
 {
 	class ServerSocket
 	{
@@ -40,7 +40,7 @@ namespace UniverGraphics
 			Port = port;
 		}
 
-		public void Start(Form owner)
+		public string Start(Form owner)
 		{
             this.owner = owner;
 			server = new TcpListener(IPAddress.Any, Port);
@@ -60,9 +60,9 @@ namespace UniverGraphics
 			}
 			catch (SocketException e)
 			{
-				Console.WriteLine(e.Message);
-				Console.ReadKey();
+				return e.Message;
 			}
+            return null;
 		}
 
 		private async void Accepter()

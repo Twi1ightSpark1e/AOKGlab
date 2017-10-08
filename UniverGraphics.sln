@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26730.12
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniverGraphics", "UniverGraphics\UniverGraphics.csproj", "{F0D91CB4-CB54-4D05-A963-E1D7DFCD2B44}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client", "Client\Client.csproj", "{F0D91CB4-CB54-4D05-A963-E1D7DFCD2B44}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Server", "Server\Server.csproj", "{93E2A72E-CC96-4A65-BEF6-C7B3A14FF028}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{F0D91CB4-CB54-4D05-A963-E1D7DFCD2B44}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F0D91CB4-CB54-4D05-A963-E1D7DFCD2B44}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F0D91CB4-CB54-4D05-A963-E1D7DFCD2B44}.Release|Any CPU.Build.0 = Release|Any CPU
+		{93E2A72E-CC96-4A65-BEF6-C7B3A14FF028}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{93E2A72E-CC96-4A65-BEF6-C7B3A14FF028}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{93E2A72E-CC96-4A65-BEF6-C7B3A14FF028}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{93E2A72E-CC96-4A65-BEF6-C7B3A14FF028}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

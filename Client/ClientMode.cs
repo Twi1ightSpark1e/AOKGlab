@@ -11,18 +11,6 @@ namespace UniverGraphics
 		public static void Start(string host)
 		{
 			client = new ClientSocket(host, 4115);
-			client.OnReceive += (message) =>
-			{
-				if (message.StartsWith("color"))
-				{
-					int colorId = Convert.ToInt32(message.Remove(0, 5));
-                    MainForm.ColorIndex = colorId;
-				}
-			};
-            client.OnConnected += () =>
-            {
-                //MainForm.Connected = true;
-            };
             client.OnDisconnect += (reason) =>
             {
                 MainForm.Connected = false;
@@ -35,11 +23,6 @@ namespace UniverGraphics
 			{
                 MessageBox.Show($"Произошла ошибка: {e.Flatten()}");
 			}
-		}
-
-		public static void SendColor(int colorId)
-		{
-			client.SendMessage($"color{colorId}");
 		}
 
         public static void SendCoordinates(string value)

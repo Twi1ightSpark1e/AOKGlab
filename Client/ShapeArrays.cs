@@ -12,7 +12,7 @@ namespace UniverGraphics
     {
         Vector3 coordinates, colors;
 
-        public ModelPoint((float x, float y, float z) coordinates, (byte r, byte g, byte b) colors)
+        public ModelPoint((float x, float y, float z) coordinates, (float r, float g, float b) colors)
         {
             this.coordinates = new Vector3(coordinates.x, coordinates.y, coordinates.z);
             this.colors = new Vector3(colors.r, colors.g, colors.b);
@@ -39,21 +39,21 @@ namespace UniverGraphics
         public readonly static ModelPoint[] FlatPoints = new ModelPoint[]
         {
             //upper panel
-            new ModelPoint((-1, -1 , -1), (1, 1, 0)),
-            new ModelPoint((-1, -1, 1), (1, 1, 0)),
-            new ModelPoint((1, -1, -1), (1, 1, 0)),
-            new ModelPoint((1, -1, 1), (1, 1, 0)),
+            new ModelPoint((-1, -1 , -1), (0.75f, 0.75f, 0.75f)),
+            new ModelPoint((-1, -1, 1), (0.75f, 0.75f, 0.75f)),
+            new ModelPoint((1, -1, -1), (0.75f, 0.75f, 0.75f)),
+            new ModelPoint((1, -1, 1), (0.75f, 0.75f, 0.75f)),
             //lower panel
-            new ModelPoint((-1, -1 , -1), (1, 0, 1)),
-            new ModelPoint((-1, -1, 1), (1, 0, 1)),
-            new ModelPoint((1, -1, -1), (1, 0, 1)),
-            new ModelPoint((1, -1, 1), (1, 0, 1)),
+            //new ModelPoint((-1, -1 , -1), (1, 0, 1)),
+            //new ModelPoint((-1, -1, 1), (1, 0, 1)),
+            //new ModelPoint((1, -1, -1), (1, 0, 1)),
+            //new ModelPoint((1, -1, 1), (1, 0, 1)),
         };
 
         public readonly static uint[] FlatIndices = new uint[]
         {
             0,  1,  2,  2,  1,  3,
-            6,  5,  4,  7,  5,  6
+            //6,  5,  4,  7,  5,  6
         };
 
         public readonly static ModelPoint[] CubePoints = new ModelPoint[]
