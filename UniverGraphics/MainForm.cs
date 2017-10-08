@@ -83,7 +83,7 @@ namespace UniverGraphics
             {
                 colorIndex = value;
                 int color = colorIndex;
-                foreach (LittleHome house in houses)
+                foreach (GraphicObject house in houses)
                     house.Color = colors[color++ % colors.Count];
                 LastInstance.Invoke((MethodInvoker)delegate
                 {
@@ -93,13 +93,13 @@ namespace UniverGraphics
         }
         private static List<(byte red, byte green, byte blue)> colors = new List<(byte red, byte green, byte blue)>()
         {
-            (  0,   0,   0),
-            (255, 255, 255),
+            (173,  82,  30),
+            ( 30,  82, 173),
             (  0, 255,   0),
             (255,   0,   0),
             (  0,   0, 255)
         };
-        private static LittleHome[] houses = new LittleHome[4];
+        private static GraphicObject[] houses = new GraphicObject[4];
         private static Camera camera;
         private static Stopwatch stopwatch;
         private static object locker = new object();
@@ -161,7 +161,7 @@ namespace UniverGraphics
                 //Настройки для просмотра
                 //Настройка позиции "глаз"
                 camera.SetCamera();
-                foreach (LittleHome house in houses)
+                foreach (GraphicObject house in houses)
                     house.Show();
                 //Поменяем местами буферы
                 glControl1.SwapBuffers();
@@ -273,11 +273,12 @@ namespace UniverGraphics
             GL.FrontFace(FrontFaceDirection.Ccw);
             GL.CullFace(CullFaceMode.Back);
 
-            List<LittleHome> houses = new List<LittleHome>();
+            List<GraphicObject> houses = new List<GraphicObject>();
             try
             {
                 StreamReader sr = new StreamReader("map.txt");
                 int lines = 0;
+                OutputMode outputMode = (OutputMode)Enum.Parse(typeof(OutputMode), "1");
                 Random rnd = new Random();
                 while (!sr.EndOfStream)
                 {
@@ -285,7 +286,7 @@ namespace UniverGraphics
                     for (int i = 0; i < line.Length; i++)
                     {
                         ShapeMode mode = (ShapeMode)Enum.Parse(typeof(ShapeMode), line[i].ToString());
-                        houses.Add(new LittleHome(0, (0, 0, 0), new Vector3((i - line.Length / 2) * 2, 0, (lines - line.Length / 2)*2), mode));
+                        houses.Add(new GraphicObject(0, (0, 0, 0), new Vector3((i - line.Length / 2) * 2, 0, (lines - line.Length / 2)*2), mode, outputMode));
                     }
                     lines++;
                 }

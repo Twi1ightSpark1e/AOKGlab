@@ -14,24 +14,29 @@ namespace UniverGraphics
     {
         Flat, Cube, Parallelepiped
     }
+    enum OutputMode
+    {
+        Triangles, Lines
+    }
 
-    class LittleHome
+    class GraphicObject
     {
         public int Angle { get; set; }
         public (byte red, byte green, byte blue) Color { get; set; }
         public Vector3 TranslateVector { get; set; }
         public ShapeMode Shape { get; set; }
+        public OutputMode Output { get; set; }
         public ModelPoint[] Vertexes { get; private set; }
         public uint[] Indices { get; private set; }
         public int IdVb { get; private set; }
         public int IdIb { get; private set; }
 
-        public LittleHome(int angle, (byte red, byte green, byte blue) color, Vector3 translate, ShapeMode shape)
+        public GraphicObject(int angle, (byte red, byte green, byte blue) color, Vector3 translate, ShapeMode shape, OutputMode output)
         {
             Angle = angle;
             Color = color;
             TranslateVector = translate;
-            Shape = shape;
+            Output = output;
             switch (shape)
             {
                 case ShapeMode.Flat:
@@ -59,10 +64,8 @@ namespace UniverGraphics
             GL.PushMatrix();
             GL.Translate(TranslateVector);
             GL.Rotate(Angle, 0, 1, 0);
-            //Установим цвет фигуры
             //GL.Color3(Color.red, Color.green, Color.blue);
-            //Нарисуем фигуру
-            //PaintLittleHome();
+            //PaintGraphicObject();
             //Teapot.DrawWireTeapot(1.0f);
 
             GL.EnableClientState(ArrayCap.VertexArray);
@@ -72,7 +75,18 @@ namespace UniverGraphics
             GL.EnableVertexAttribArray(0);
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, ModelPoint.Size(), ModelPoint.CoordinatesOffset());
             GL.ColorPointer(3, ColorPointerType.Float, ModelPoint.Size(), ModelPoint.ColorsOffset());
-            GL.DrawElements(PrimitiveType.Triangles, Indices.Length, DrawElementsType.UnsignedInt, 0);
+            switch (Output)
+            {
+                case OutputMode.Triangles:
+                    GL.DrawElements(PrimitiveType.Triangles, Indices.Length, DrawElementsType.UnsignedInt, 0);
+                    break;
+                case OutputMode.Lines:
+                    GL.DrawElements(PrimitiveType.Lines, Indices.Length, DrawElementsType.UnsignedInt, 0);
+                    break;
+                default:
+                    GL.DrawElements(PrimitiveType.Triangles, Indices.Length, DrawElementsType.UnsignedInt, 0);
+                    break;
+            }
             GL.DisableClientState(ArrayCap.VertexArray);
             GL.DisableClientState(ArrayCap.ColorArray);
 
