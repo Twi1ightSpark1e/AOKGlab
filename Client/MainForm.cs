@@ -244,7 +244,7 @@ namespace UniverGraphics
         private void changeModelButton_Click(object sender, EventArgs e)
         {
             int temp = (int)GraphicObject.Output;
-            GraphicObject.Output = (OutputMode)(++temp % 2);
+            GraphicObject.Output = (OutputMode)(++temp % Enum.GetNames(typeof(OutputMode)).Length);
         }
 
         private void cullFaceModeButton_Click(object sender, EventArgs e)

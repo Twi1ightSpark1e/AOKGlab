@@ -94,7 +94,7 @@ namespace Server
                 if (((Square)sender).Tag == square.Tag)
                 {
                     int temp = (int)square.SquareContent;
-                    temp = ++temp % 3;
+                    temp = ++temp % Enum.GetNames(typeof(SquareContent)).Length;
                     square.SquareContent = (SquareContent)temp;
 
                     for (int i = 0; i < mapUnits.Count; i++)
