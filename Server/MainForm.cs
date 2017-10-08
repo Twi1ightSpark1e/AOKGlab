@@ -67,6 +67,7 @@ namespace Server
                         square.Visible = true;
                         square.SquareContent = (SquareContent)Enum.Parse(typeof(SquareContent), line[i].ToString());
                         square.Click += square_Click;
+                        square.DoubleClick += square_Click;
                         squaresPanel.Controls.Add(square);
                         mapUnits.Add(new MapUnit()
                         {
