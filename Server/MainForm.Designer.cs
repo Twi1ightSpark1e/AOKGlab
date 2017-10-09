@@ -32,6 +32,7 @@
             this.portTextBox = new System.Windows.Forms.TextBox();
             this.startButton = new System.Windows.Forms.Button();
             this.squaresPanel = new System.Windows.Forms.Panel();
+            this.defaultMapButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // portLabel
@@ -72,6 +73,16 @@
             this.squaresPanel.Size = new System.Drawing.Size(415, 292);
             this.squaresPanel.TabIndex = 3;
             // 
+            // defaultMapButton
+            // 
+            this.defaultMapButton.Location = new System.Drawing.Point(238, 12);
+            this.defaultMapButton.Name = "defaultMapButton";
+            this.defaultMapButton.Size = new System.Drawing.Size(119, 20);
+            this.defaultMapButton.TabIndex = 4;
+            this.defaultMapButton.Text = "Стандартная карта";
+            this.defaultMapButton.UseVisualStyleBackColor = true;
+            this.defaultMapButton.Click += new System.EventHandler(this.defaultMapButton_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -79,6 +90,7 @@
             this.AutoSize = true;
             this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.ClientSize = new System.Drawing.Size(439, 342);
+            this.Controls.Add(this.defaultMapButton);
             this.Controls.Add(this.squaresPanel);
             this.Controls.Add(this.startButton);
             this.Controls.Add(this.portTextBox);
@@ -97,6 +109,7 @@
         private System.Windows.Forms.TextBox portTextBox;
         private System.Windows.Forms.Button startButton;
         private System.Windows.Forms.Panel squaresPanel;
+        private System.Windows.Forms.Button defaultMapButton;
     }
 }
 

@@ -38,7 +38,7 @@ namespace Server
             set
             {
                 listening = value;
-                portTextBox.Enabled = !value;
+                portTextBox.Enabled = defaultMapButton.Enabled = !value;
                 startButton.Text = startButton.Text == StartServer ? StopServer : StartServer;
             }
         }
@@ -61,6 +61,12 @@ namespace Server
                 Application.Exit();
                 return;
             }
+            ReadFromMap(mapFileName);
+        }
+
+        private void ReadFromMap(string mapFileName)
+        {
+            mapUnits.Clear();
             try
             {
                 StreamReader sr = new StreamReader(mapFileName);
@@ -133,13 +139,12 @@ namespace Server
             ServerMode.Server.OnConnected -= ServerMode_OnConnected;
             ServerMode.Server.OnReceive -= ServerMode_OnReceive;
             Listening = false;
-            startButton.Enabled = true;
-            squaresPanel.Enabled = true;
+            startButton.Enabled = squaresPanel.Enabled = defaultMapButton.Enabled = true;
         }
 
         private void startButton_Click(object sender, EventArgs e)
         {
-            portTextBox.Enabled = squaresPanel.Enabled = false;
+            portTextBox.Enabled = squaresPanel.Enabled = defaultMapButton.Enabled = false;
             startButton.Click -= startButton_Click;
             startButton.Click += stopButton_Click;
             ServerMode.Server.OnConnected += ServerMode_OnConnected;
@@ -191,6 +196,19 @@ namespace Server
             }
             sw.Flush();
             sw.Close();
+        }
+
+        private void defaultMapButton_Click(object sender, EventArgs e)
+        {
+            File.Delete("map_latest.txt");
+            if (!File.Exists("map_default.txt"))
+            {
+                MessageBox.Show("Файл с картой проходимости по умолчанию не найден");
+                Application.Exit();
+                return;
+            }
+            squaresPanel.Controls.Clear();
+            ReadFromMap("map_default.txt");
         }
     }
 }
