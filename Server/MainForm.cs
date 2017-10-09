@@ -49,10 +49,21 @@ namespace Server
         public MainForm()
         {
             InitializeComponent();
-            
+
+            string mapFileName;
+            if (File.Exists("map_latest.txt"))
+                mapFileName = "map_latest.txt";
+            else if (File.Exists("map_default.txt"))
+                mapFileName = "map_default.txt";
+            else
+            {
+                MessageBox.Show("Файл карты проходимости не найден");
+                Application.Exit();
+                return;
+            }
             try
             {
-                StreamReader sr = new StreamReader("map.txt");
+                StreamReader sr = new StreamReader(mapFileName);
                 int lines = 0;
                 Random rnd = new Random();
                 while (!sr.EndOfStream)
@@ -61,7 +72,7 @@ namespace Server
                     for (int i = 0; i < line.Length; i++)
                     {
                         var square = new Square();
-                        square.Location = new Point(lines * 20, i * 20);
+                        square.Location = new Point(i * 20, lines * 20);
                         square.Tag = $"{i};{lines}";
                         square.Height = square.Width = 20;
                         square.Visible = true;
@@ -80,9 +91,9 @@ namespace Server
                 }
                 sr.Close();
             }
-            catch (FileNotFoundException)
+            catch (Exception)
             {
-                MessageBox.Show("Файл карты проходимости не найден");
+                MessageBox.Show("Возникла ошибка при работе с файлом проходимости");
                 Application.Exit();
             }
         }
@@ -161,6 +172,25 @@ namespace Server
         private void ServerMode_OnConnected(TcpClient client)
         {
             ServerMode.Server.SendTo(client, $"arr{JsonConvert.SerializeObject(mapUnits)}");
+        }
+
+        private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            if (Listening)
+                ServerMode.Stop();
+            StreamWriter sw = new StreamWriter("map_latest.txt", false);
+            int latestX = 0;
+            foreach (MapUnit unit in mapUnits)
+            {
+                if (latestX != unit.y)
+                {
+                    sw.WriteLine();
+                    latestX = unit.y;
+                }
+                sw.Write(unit.value);
+            }
+            sw.Flush();
+            sw.Close();
         }
     }
 }

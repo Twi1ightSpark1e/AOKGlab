@@ -36,7 +36,6 @@ namespace UniverGraphics
             set
             {
                 connected = value;
-                LastInstance.glControl1.Refresh();
                 LastInstance.addressTextBox.Enabled = LastInstance.connectButton.Enabled = !connected;
                 LastInstance.changeModelButton.Enabled = LastInstance.cullFaceModeButton.Enabled = connected;
                 if (value)
@@ -46,7 +45,12 @@ namespace UniverGraphics
                         stopwatch = Stopwatch.StartNew();
                     else stopwatch.Restart();
                 }
-                else Application.Idle -= LastInstance.mainForm_onIdle;
+                else
+                {
+                    Application.Idle -= LastInstance.mainForm_onIdle;
+                    stopwatch?.Stop();
+                }
+                LastInstance.glControl1.Invalidate();
             }
         }
         
@@ -142,6 +146,25 @@ namespace UniverGraphics
         {
             lock (locker)
             {
+                message = message.Remove(0, 6);
+                string[] coordinates = message.Split(';');
+                camera.RadianX = float.Parse(coordinates[0]);
+                camera.RadianY = float.Parse(coordinates[1]);
+                camera.Radius = float.Parse(coordinates[2]);
+                if (!Connected)
+                    Invoke((MethodInvoker)delegate
+                    {
+                        Connected = true;
+                    });
+            }
+        }
+
+        private void connectButton_Click(object sender, EventArgs e)
+        {
+            addressTextBox.Enabled = connectButton.Enabled = false;
+            ClientMode.Start(addressTextBox.Text);
+            ClientMode.Client.OnReceive += (message) =>
+            {
                 if (message.StartsWith("arr"))
                 {
                     message = message.Remove(0, 3);
@@ -161,29 +184,17 @@ namespace UniverGraphics
                     }
                     ClientMode.Client.SendMessage("ackarr");
                 }
-                if (message.StartsWith("coords"))
+                else if (message.StartsWith("close"))
                 {
-                    message = message.Remove(0, 6);
-                    string[] coordinates = message.Split(';');
-                    camera.RadianX = float.Parse(coordinates[0]);
-                    camera.RadianY = float.Parse(coordinates[1]);
-                    camera.Radius = float.Parse(coordinates[2]);
-                    if (!Connected)
-                        Invoke((MethodInvoker)delegate
-                        {
-                            Connected = true;
-                        });
+                    Invoke((MethodInvoker)delegate
+                    {
+                        Connected = false;
+                        GL.ClearColor(new OpenTK.Graphics.Color4(0, 0, 0, 0));
+                        houses = null;
+                    });
                 }
-            }
-        }
-
-        private void connectButton_Click(object sender, EventArgs e)
-        {
-            addressTextBox.Enabled = connectButton.Enabled = false;
-            ClientMode.Start(addressTextBox.Text);
-            ClientMode.Client.OnReceive += (message) =>
-            {
-                CoordinatesReceived(message);
+                else if (message.StartsWith("coords"))
+                    CoordinatesReceived(message);
             };
         }
 
