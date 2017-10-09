@@ -1,4 +1,4 @@
-﻿namespace UniverGraphics
+﻿namespace Client
 {
     partial class MainForm
     {

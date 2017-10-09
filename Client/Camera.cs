@@ -3,7 +3,7 @@
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 
-namespace UniverGraphics
+namespace Client
 {
     [Flags]
     enum Directions

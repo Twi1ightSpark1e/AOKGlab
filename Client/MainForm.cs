@@ -12,7 +12,7 @@ using System.Runtime.InteropServices;
 using System.Linq;
 using Newtonsoft.Json;
 
-namespace UniverGraphics
+namespace Client
 {
     public struct MapUnit
     {
@@ -54,7 +54,8 @@ namespace UniverGraphics
             }
         }
         
-        private static GraphicObject[] houses;
+        private static List<GraphicObject> graphicObjects;
+        private static Model[] models;
         private static Camera camera;
         private static Stopwatch stopwatch;
         private static object locker = new object();
@@ -69,7 +70,9 @@ namespace UniverGraphics
         {
             if (Environment.TickCount - lastTick >= 1000)
             {
-                lastFrameRate = "Лабораторная работа №5, клиент; FPS: " + frameRate.ToString();
+                string outputMode = Model.OutputMode == OutputMode.Lines ? "Вывод линий" : "Вывод треугольников";
+                string cullingMode = isCullingFaces ? "Отсечение граней" : "Нет отсечения граней";
+                lastFrameRate = $"Лабораторная работа №5, клиент; FPS: {frameRate.ToString()}; {outputMode}; {cullingMode}";
                 frameRate = 0;
                 lastTick = Environment.TickCount;
             }
@@ -135,8 +138,9 @@ namespace UniverGraphics
                 //Настройки для просмотра
                 //Настройка позиции "глаз"
                 camera.SetCamera();
-                foreach (GraphicObject house in houses)
-                    house.Show();
+                //Отображаем все элементы
+                foreach (GraphicObject graphicObject in graphicObjects)
+                    graphicObject.Show();
                 //Поменяем местами буферы
                 glControl1.SwapBuffers();
             }
@@ -170,20 +174,26 @@ namespace UniverGraphics
                 {
                     if (msg.StartsWith("arr"))
                     {
-                        //msg = msg.Remove(0, 3);
+                        graphicObjects = new List<GraphicObject>();
                         MapUnit[] units = JsonConvert.DeserializeObject<MapUnit[]>(msg.Remove(0, 3));
                         int rowsCount = units.Max((unit) => unit.x) + 1;
                         int columnsCount = units.Max((unit) => unit.y) + 1;
-                        houses = new GraphicObject[units.Length];
-                        int i = 0;
+                        Invoke((MethodInvoker)delegate
+                        {
+                            models[2] = Model.CreateFlat(rowsCount, columnsCount);
+                        });
+                        graphicObjects.Add(new GraphicObject(models[2], new Vector3(0, 0, 0), 0));
                         foreach (MapUnit unit in units)
                         {
-                            OutputMode outputMode = (OutputMode)Enum.Parse(typeof(OutputMode), "0");
-                            ShapeMode mode = (ShapeMode)Enum.Parse(typeof(ShapeMode), unit.value.ToString());
-                            Invoke((MethodInvoker)delegate
+                            switch (unit.value)
                             {
-                                houses[i++] = new GraphicObject(0, (0, 0, 0), new Vector3((unit.x - rowsCount / 2) * 2, 0, (unit.y - columnsCount / 2) * 2), mode, outputMode);
-                            });
+                                case 1:
+                                    graphicObjects.Add(new GraphicObject(models[0], new Vector3((unit.x - rowsCount / 2) * 2, 0, (unit.y - columnsCount / 2) * 2), 0));
+                                    break;
+                                case 2:
+                                    graphicObjects.Add(new GraphicObject(models[1], new Vector3((unit.x - rowsCount / 2) * 2, 0, (unit.y - columnsCount / 2) * 2), 0));
+                                    break;
+                            }
                         }
                         ClientMode.Client.SendMessage("ackarr");
                     }
@@ -193,7 +203,7 @@ namespace UniverGraphics
                         {
                             Connected = false;
                             GL.ClearColor(new OpenTK.Graphics.Color4(0, 0, 0, 0));
-                            houses = null;
+                            graphicObjects.Clear();
                         });
                     }
                     else if (msg.StartsWith("coords"))
@@ -244,7 +254,14 @@ namespace UniverGraphics
         {
             GL.Enable(EnableCap.DepthTest);
             ChangeCullingFaces(true);
-            GraphicObject.Output = OutputMode.Triangles;
+            Model.OutputMode = OutputMode.Triangles;
+
+            models = new Model[]
+            {
+                Model.CreateCube(),
+                Model.CreateParallelepiped(),
+                null
+            };  
         }
 
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
@@ -258,8 +275,12 @@ namespace UniverGraphics
 
         private void changeModelButton_Click(object sender, EventArgs e)
         {
-            int temp = (int)GraphicObject.Output;
-            GraphicObject.Output = (OutputMode)(++temp % Enum.GetNames(typeof(OutputMode)).Length);
+            int temp = (int)Model.OutputMode;
+            Model.OutputMode = (OutputMode)(++temp % Enum.GetNames(typeof(OutputMode)).Length);
+
+            string outputMode = Model.OutputMode == OutputMode.Lines ? "Вывод линий" : "Вывод треугольников";
+            string cullingMode = isCullingFaces ? "Отсечение граней" : "Нет отсечения граней";
+            Text = $"Лабораторная работа №5, клиент; FPS: {frameRate.ToString()}; {outputMode}; {cullingMode}";
         }
 
         private void cullFaceModeButton_Click(object sender, EventArgs e)
@@ -280,6 +301,10 @@ namespace UniverGraphics
                 GL.Disable(EnableCap.CullFace);
             }
             isCullingFaces = value;
+
+            string outputMode = Model.OutputMode == OutputMode.Lines ? "Вывод линий" : "Вывод треугольников";
+            string cullingMode = isCullingFaces ? "Отсечение граней" : "Нет отсечения граней";
+            Text = $"Лабораторная работа №5, клиент; FPS: {frameRate.ToString()}; {outputMode}; {cullingMode}";
         }
     }
 }
