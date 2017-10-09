@@ -78,7 +78,7 @@ namespace UniverGraphics
                 if (Radius < 100)
                     Radius += (float)Math.Pow(Speed, 4) * millisecondsElapsed / 1000;
             }
-            ChangedCoordinates = $"{RadianX};{RadianY};{Radius}";
+            ChangedCoordinates = $"{RadianX};{RadianY};{Radius}&";
         }
     }
 }

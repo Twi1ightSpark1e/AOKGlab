@@ -165,36 +165,40 @@ namespace UniverGraphics
             ClientMode.Start(addressTextBox.Text);
             ClientMode.Client.OnReceive += (message) =>
             {
-                if (message.StartsWith("arr"))
+                string[] messages = message.Split('&');
+                foreach (string msg in messages)
                 {
-                    message = message.Remove(0, 3);
-                    MapUnit[] units = JsonConvert.DeserializeObject<MapUnit[]>(message);
-                    int rowsCount = units.Max((unit) => unit.x) + 1;
-                    int columnsCount = units.Max((unit) => unit.y) + 1;
-                    houses = new GraphicObject[units.Length];
-                    int i = 0;
-                    foreach (MapUnit unit in units)
+                    if (msg.StartsWith("arr"))
                     {
-                        OutputMode outputMode = (OutputMode)Enum.Parse(typeof(OutputMode), "0");
-                        ShapeMode mode = (ShapeMode)Enum.Parse(typeof(ShapeMode), unit.value.ToString());
+                        //msg = msg.Remove(0, 3);
+                        MapUnit[] units = JsonConvert.DeserializeObject<MapUnit[]>(msg.Remove(0, 3));
+                        int rowsCount = units.Max((unit) => unit.x) + 1;
+                        int columnsCount = units.Max((unit) => unit.y) + 1;
+                        houses = new GraphicObject[units.Length];
+                        int i = 0;
+                        foreach (MapUnit unit in units)
+                        {
+                            OutputMode outputMode = (OutputMode)Enum.Parse(typeof(OutputMode), "0");
+                            ShapeMode mode = (ShapeMode)Enum.Parse(typeof(ShapeMode), unit.value.ToString());
+                            Invoke((MethodInvoker)delegate
+                            {
+                                houses[i++] = new GraphicObject(0, (0, 0, 0), new Vector3((unit.x - rowsCount / 2) * 2, 0, (unit.y - columnsCount / 2) * 2), mode, outputMode);
+                            });
+                        }
+                        ClientMode.Client.SendMessage("ackarr");
+                    }
+                    else if (msg.StartsWith("close"))
+                    {
                         Invoke((MethodInvoker)delegate
                         {
-                            houses[i++] = new GraphicObject(0, (0, 0, 0), new Vector3((unit.x - rowsCount / 2) * 2, 0, (unit.y - columnsCount / 2) * 2), mode, outputMode);
+                            Connected = false;
+                            GL.ClearColor(new OpenTK.Graphics.Color4(0, 0, 0, 0));
+                            houses = null;
                         });
                     }
-                    ClientMode.Client.SendMessage("ackarr");
+                    else if (msg.StartsWith("coords"))
+                        CoordinatesReceived(msg);
                 }
-                else if (message.StartsWith("close"))
-                {
-                    Invoke((MethodInvoker)delegate
-                    {
-                        Connected = false;
-                        GL.ClearColor(new OpenTK.Graphics.Color4(0, 0, 0, 0));
-                        houses = null;
-                    });
-                }
-                else if (message.StartsWith("coords"))
-                    CoordinatesReceived(message);
             };
         }
 

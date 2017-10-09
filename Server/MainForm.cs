@@ -156,21 +156,23 @@ namespace Server
 
         private void ServerMode_OnReceive(TcpClient client, string message)
         {
-            if (message.StartsWith("ack"))
+            string[] messages = message.Split('&');
+            foreach (string msg in messages)
             {
-                message = message.Remove(0, 3);
-                if (message == "arr")
+                if (msg.StartsWith("ack"))
                 {
-                    ServerMode.Server.SendTo(client, $"coords{cameraCoordinates.radianX};{cameraCoordinates.radianY};{cameraCoordinates.radius}");
+                    if (msg.Remove(0, 3) == "arr")
+                    {
+                        ServerMode.Server.SendTo(client, $"coords{cameraCoordinates.radianX};{cameraCoordinates.radianY};{cameraCoordinates.radius}");
+                    }
                 }
-            }
-            else if (message.StartsWith("coords"))
-            {
-                message = message.Remove(0, 6);
-                string[] coordinates = message.Split(';');
-                cameraCoordinates.radianX = float.Parse(coordinates[0]);
-                cameraCoordinates.radianY = float.Parse(coordinates[1]);
-                cameraCoordinates.radius = float.Parse(coordinates[2]);
+                else if (msg.StartsWith("coords"))
+                {
+                    string[] coordinates = msg.Remove(0, 6).Split(';');
+                    cameraCoordinates.radianX = float.Parse(coordinates[0]);
+                    cameraCoordinates.radianY = float.Parse(coordinates[1]);
+                    cameraCoordinates.radius = float.Parse(coordinates[2]);
+                }
             }
         }
 
