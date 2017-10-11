@@ -55,6 +55,7 @@ namespace Client
         }
         
         private static List<GraphicObject> graphicObjects;
+        internal static List<GraphicObject> Scene => graphicObjects;
         private static Model[] models;
         private static Camera camera;
         private static Stopwatch stopwatch;
@@ -65,6 +66,8 @@ namespace Client
         private static int lastTick;
         private static string lastFrameRate;
         private static int frameRate;
+
+        private GraphicObject playerObject;
 
         public static string CalculateFrameRate()
         {
@@ -109,6 +112,10 @@ namespace Client
                 Target = new Vector3( 0, 0, 0),
                 Up     = new Vector3( 0, 1, 0)
             };
+            
+            int arrivalTimeInSeconds = new Random().Next(3600, 86400);
+            TimeSpan arrivalTimeSpan = TimeSpan.FromSeconds(arrivalTimeInSeconds);
+            DateTime arrivalDateTime = DateTime.Now.Add(arrivalTimeSpan);
         }
 
         private void glControl1_Resize(object sender, EventArgs e)
@@ -176,22 +183,24 @@ namespace Client
                     {
                         graphicObjects = new List<GraphicObject>();
                         MapUnit[] units = JsonConvert.DeserializeObject<MapUnit[]>(msg.Remove(0, 3));
-                        int rowsCount = units.Max((unit) => unit.x) + 1;
-                        int columnsCount = units.Max((unit) => unit.y) + 1;
+                        int columnsCount = units.Max((unit) => unit.x) + 1;
+                        int rowsCount = units.Max((unit) => unit.y) + 1;
                         Invoke((MethodInvoker)delegate
                         {
-                            models[2] = Model.CreateFlat(rowsCount, columnsCount);
+                            models[3] = Model.CreateFlat(rowsCount, columnsCount);
                         });
-                        graphicObjects.Add(new GraphicObject(models[2], new Vector3(0, 0, 0), 0));
+                        graphicObjects.Add(new GraphicObject(models[3], (0, 0), (0, 0), 0)); //плоская модель
+                        playerObject = new GraphicObject(models[1], (2, 1), (rowsCount, columnsCount), 0); //кубик игрока
+                        graphicObjects.Add(playerObject);
                         foreach (MapUnit unit in units)
                         {
-                            switch (unit.value)
+                            switch ((ShapeMode)unit.value)
                             {
-                                case 1:
-                                    graphicObjects.Add(new GraphicObject(models[0], new Vector3((unit.x - rowsCount / 2) * 2, 0, (unit.y - columnsCount / 2) * 2), 0));
+                                case ShapeMode.Cube:
+                                    graphicObjects.Add(new GraphicObject(models[0], (unit.x, unit.y), (rowsCount, columnsCount), 0));
                                     break;
-                                case 2:
-                                    graphicObjects.Add(new GraphicObject(models[1], new Vector3((unit.x - rowsCount / 2) * 2, 0, (unit.y - columnsCount / 2) * 2), 0));
+                                case ShapeMode.Parallelepiped:
+                                    graphicObjects.Add(new GraphicObject(models[2], (unit.x, unit.y), (rowsCount, columnsCount), 0));
                                     break;
                             }
                         }
@@ -236,6 +245,22 @@ namespace Client
             label10.Text = "Z: " + eye.Z.ToString();
             camera.CurrentDirection = dirs;
             camera.Simulate(millisecondsElapsed);
+
+            int move = 0;
+            if (state.IsKeyDown(Key.W))
+                move = (int)(MoveDirection.Up);
+            if (state.IsKeyDown(Key.A))
+                move = (int)(MoveDirection.Left);
+            if (state.IsKeyDown(Key.S))
+                move = (int)(MoveDirection.Down);
+            if (state.IsKeyDown(Key.D))
+                move = (int)(MoveDirection.Right);
+            if (move != 0)
+            {
+                MoveDirection moveDirection = (MoveDirection)move;
+                MessageBox.Show(playerObject.CanMove(moveDirection).ToString());
+            }
+
             if (camera.ChangedCoordinates != string.Empty && lastSentCoordinates != camera.ChangedCoordinates)
             {
                 if (Connected)
@@ -259,6 +284,7 @@ namespace Client
             models = new Model[]
             {
                 Model.CreateCube(),
+                Model.CreatePlayer(),
                 Model.CreateParallelepiped(),
                 null
             };  

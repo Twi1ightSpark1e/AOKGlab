@@ -111,7 +111,11 @@ namespace Server
                 if (((Square)sender).Tag == square.Tag)
                 {
                     int temp = (int)square.SquareContent;
-                    temp = ++temp % Enum.GetNames(typeof(SquareContent)).Length;
+                    do
+                    {
+                        temp = ++temp % Enum.GetNames(typeof(SquareContent)).Length;
+                    }
+                    while ((SquareContent)temp == SquareContent.Player);
                     square.SquareContent = (SquareContent)temp;
 
                     for (int i = 0; i < mapUnits.Count; i++)
