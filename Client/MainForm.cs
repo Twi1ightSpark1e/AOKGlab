@@ -112,10 +112,6 @@ namespace Client
                 Target = new Vector3( 0, 0, 0),
                 Up     = new Vector3( 0, 1, 0)
             };
-            
-            int arrivalTimeInSeconds = new Random().Next(3600, 86400);
-            TimeSpan arrivalTimeSpan = TimeSpan.FromSeconds(arrivalTimeInSeconds);
-            DateTime arrivalDateTime = DateTime.Now.Add(arrivalTimeSpan);
         }
 
         private void glControl1_Resize(object sender, EventArgs e)
@@ -190,7 +186,7 @@ namespace Client
                             models[3] = Model.CreateFlat(rowsCount, columnsCount);
                         });
                         graphicObjects.Add(new GraphicObject(models[3], (0, 0), (0, 0), 0)); //плоская модель
-                        playerObject = new GraphicObject(models[1], (2, 1), (rowsCount, columnsCount), 0); //кубик игрока
+                        playerObject = new GraphicObject(models[1], (11, 11), (rowsCount, columnsCount), 0); //кубик игрока
                         graphicObjects.Add(playerObject);
                         foreach (MapUnit unit in units)
                         {
@@ -240,11 +236,11 @@ namespace Client
             label5.Text = "RIGHT: " + state.IsKeyDown(Key.Right).ToString();
             label6.Text = "PLUS: " + (state.IsKeyDown(Key.Plus) || state.IsKeyDown(Key.KeypadPlus)).ToString();
             label7.Text = "MINUS: " + (state.IsKeyDown(Key.Minus) || state.IsKeyDown(Key.KeypadMinus)).ToString();
-            label8.Text = "X: " + eye.X.ToString();
-            label9.Text = "Y: " + eye.Y.ToString();
-            label10.Text = "Z: " + eye.Z.ToString();
+            label8.Text = "playerX: " + playerObject.Position.x.ToString();
+            label9.Text = "playerY: 0"/* + eye.Y.ToString()*/;
+            label10.Text = "playerZ: " + playerObject.Position.z.ToString();
             camera.CurrentDirection = dirs;
-            camera.Simulate(millisecondsElapsed);
+            camera.Simulate(millisecondsElapsed / 1000);
 
             int move = 0;
             if (state.IsKeyDown(Key.W))
@@ -258,8 +254,11 @@ namespace Client
             if (move != 0)
             {
                 MoveDirection moveDirection = (MoveDirection)move;
-                MessageBox.Show(playerObject.CanMove(moveDirection).ToString());
+                if (playerObject.CanMove(moveDirection))
+                    playerObject.Move(moveDirection);
             }
+            if (playerObject.IsMoving)
+                playerObject.Simulate(millisecondsElapsed / 1000);
 
             if (camera.ChangedCoordinates != string.Empty && lastSentCoordinates != camera.ChangedCoordinates)
             {

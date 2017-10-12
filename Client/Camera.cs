@@ -48,35 +48,35 @@ namespace Client
             Eye = eye;
         }
 
-        public void Simulate(float millisecondsElapsed)
+        public void Simulate(float secondsElapsed)
         {
             if (CurrentDirection.HasFlag(Directions.Up)) //вверх
             { 
                 if (RadianY < 1.396)
-                    RadianY += (float)Math.Sqrt(Speed) * millisecondsElapsed / 1000;
+                    RadianY += (float)Math.Sqrt(Speed) * secondsElapsed;
             }
             if (CurrentDirection.HasFlag(Directions.Down)) //вниз
             {
                 if (RadianY > 0.0873)
-                    RadianY -= (float)Math.Sqrt(Speed) * millisecondsElapsed / 1000;
+                    RadianY -= (float)Math.Sqrt(Speed) * secondsElapsed;
             }
             if (CurrentDirection.HasFlag(Directions.Left)) //влево
             {
-                RadianX += ((float)Math.PI / 2) * Speed * millisecondsElapsed / 1000;
+                RadianX += ((float)Math.PI / 2) * Speed * secondsElapsed;
             }
             if (CurrentDirection.HasFlag(Directions.Right)) //вправо
             { 
-                RadianX -= ((float)Math.PI / 2) * Speed * millisecondsElapsed / 1000;
+                RadianX -= ((float)Math.PI / 2) * Speed * secondsElapsed;
             }
             if (CurrentDirection.HasFlag(Directions.Forward)) //приближаемся
             {
                 if (Radius > 10)
-                    Radius -= (float)Math.Pow(Speed, 4) * millisecondsElapsed / 1000;
+                    Radius -= (float)Math.Pow(Speed, 4) * secondsElapsed;
             }
             if (CurrentDirection.HasFlag(Directions.Backward)) //отдаляемся
             {
                 if (Radius < 100)
-                    Radius += (float)Math.Pow(Speed, 4) * millisecondsElapsed / 1000;
+                    Radius += (float)Math.Pow(Speed, 4) * secondsElapsed;
             }
             ChangedCoordinates = $"{RadianX};{RadianY};{Radius}&";
         }
