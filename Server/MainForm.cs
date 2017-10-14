@@ -15,13 +15,26 @@ namespace Server
 {
     public struct MapUnit
     {
-        public int x, y;
-        public byte value;
+        public int x, z, value;
+
+        public void SetContent(int value)
+        {
+            this.value = value;
+        }
     }
 
     public struct CameraCoordinates
     {
         public float radianX, radianY, radius;
+    }
+
+    enum MoveDirection
+    {
+        None = 0,
+        Left = -2,
+        Up = -1,
+        Down = 1,
+        Right = 2
     }
 
     public partial class MainForm : Form
@@ -89,13 +102,14 @@ namespace Server
                         mapUnits.Add(new MapUnit()
                         {
                             x = i,
-                            y = lines,
+                            z = lines,
                             value = byte.Parse(line[i].ToString())
                         });
                     }
                     lines++;
                 }
                 sr.Close();
+                startButton.Enabled = mapUnits.Where((unit) => unit.value == (int)SquareContent.Player).Count() == 1;
             }
             catch (Exception)
             {
@@ -111,16 +125,12 @@ namespace Server
                 if (((Square)sender).Tag == square.Tag)
                 {
                     int temp = (int)square.SquareContent;
-                    do
-                    {
-                        temp = ++temp % Enum.GetNames(typeof(SquareContent)).Length;
-                    }
-                    while ((SquareContent)temp == SquareContent.Player);
+                    temp = ++temp % Enum.GetNames(typeof(SquareContent)).Length;
                     square.SquareContent = (SquareContent)temp;
 
                     for (int i = 0; i < mapUnits.Count; i++)
                     {
-                        if (square.Tag.ToString() == $"{mapUnits[i].x};{mapUnits[i].y}")
+                        if (square.Tag.ToString() == $"{mapUnits[i].x};{mapUnits[i].z}")
                         {
                             var tempUnit = mapUnits[i];
                             tempUnit.value = (byte)temp;
@@ -129,7 +139,7 @@ namespace Server
                             break;
                         }
                     }
-
+                    startButton.Enabled = mapUnits.Where((unit) => unit.value == (int)SquareContent.Player).Count() == 1;
                     break;
                 }
             }
@@ -177,6 +187,92 @@ namespace Server
                     cameraCoordinates.radianY = float.Parse(coordinates[1]);
                     cameraCoordinates.radius = float.Parse(coordinates[2]);
                 }
+                else if (msg.StartsWith("move"))
+                {
+                    MoveDirection direction = (MoveDirection)Enum.Parse(typeof(MoveDirection), msg.Remove(0, 4));
+                    MapUnit player = new MapUnit()
+                    {
+                        value = -1
+                    };
+                    int i = 0;
+                    for (i = 0; i < mapUnits.Count; i++)
+                    {
+                        if (mapUnits[i].value == (int)SquareContent.Player)
+                        {
+                            player = mapUnits[i];
+                            break;
+                        }
+                    }
+                    if (player.value == -1)
+                        throw new Exception("Не найден игровой кубик");
+                    List<MapUnit> modifiedUnits = new List<MapUnit>();
+                    MoveSquare(direction, player, ref modifiedUnits);
+                    foreach (MapUnit unit in modifiedUnits)
+                    {
+                        for (int j = 0; j < mapUnits.Count; j++)
+                        {
+                            if (mapUnits[j].x == unit.x && mapUnits[j].z == unit.z)
+                            {
+                                mapUnits.RemoveAt(j);
+                                mapUnits.Insert(j, unit);
+                                break;
+                            }
+                        }
+                        foreach (Square square in squaresPanel.Controls)
+                        {
+                            if (square.Tag.ToString() == $"{unit.x};{unit.z}")
+                            {
+                                square.SquareContent = (SquareContent)unit.value;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        private void MoveSquare(MoveDirection direction, MapUnit playerUnit, ref List<MapUnit> modifiedUnits)
+        {
+            int targetX = playerUnit.x, targetZ = playerUnit.z;
+            switch (direction)
+            {
+                case MoveDirection.Up:
+                case MoveDirection.Down:
+                    targetZ += Math.Sign((sbyte)direction);
+                    break;
+                case MoveDirection.Left:
+                case MoveDirection.Right:
+                    targetX += Math.Sign((sbyte)direction);
+                    break;
+            }
+            MapUnit nextUnit = new MapUnit
+            {
+                value = -1
+            };
+            foreach (MapUnit unit in mapUnits)
+            {
+                if (unit.x == targetX && unit.z == targetZ)
+                {
+                    nextUnit = unit;
+                    break;
+                }
+            }
+            if (nextUnit.value == -1)
+                throw new Exception("Не найден следующий за игровым кубик");
+            if (nextUnit.value == (int)SquareContent.Empty)
+            {
+                nextUnit.SetContent(playerUnit.value);
+                modifiedUnits.Add(nextUnit);
+                playerUnit.SetContent((int)SquareContent.Empty);
+                modifiedUnits.Add(playerUnit);
+            }
+            else if (nextUnit.value == (int)SquareContent.Barrier && playerUnit.value == (int)SquareContent.Player)
+            {
+                MoveSquare(direction, nextUnit, ref modifiedUnits);
+                nextUnit.SetContent(playerUnit.value);
+                modifiedUnits.Add(nextUnit);
+                playerUnit.SetContent((int)SquareContent.Empty);
+                modifiedUnits.Add(playerUnit);
             }
         }
 
@@ -193,10 +289,10 @@ namespace Server
             int latestX = 0;
             foreach (MapUnit unit in mapUnits)
             {
-                if (latestX != unit.y)
+                if (latestX != unit.z)
                 {
                     sw.WriteLine();
-                    latestX = unit.y;
+                    latestX = unit.z;
                 }
                 sw.Write(unit.value);
             }

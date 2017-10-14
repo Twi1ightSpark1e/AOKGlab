@@ -16,7 +16,7 @@ namespace Client
 {
     public struct MapUnit
     {
-        public int x, y;
+        public int x, z;
         public byte value;
     }
 
@@ -56,12 +56,13 @@ namespace Client
         
         private static List<GraphicObject> graphicObjects;
         internal static List<GraphicObject> Scene => graphicObjects;
-        private static Model[] models;
+        private static List<Model> models;
         private static Camera camera;
         private static Stopwatch stopwatch;
         private static object locker = new object();
         private static string lastSentCoordinates;
         private static bool isCullingFaces;
+        private bool waitUntilMoveReceive;
 
         private static int lastTick;
         private static string lastFrameRate;
@@ -158,6 +159,11 @@ namespace Client
                 camera.RadianX = float.Parse(coordinates[0]);
                 camera.RadianY = float.Parse(coordinates[1]);
                 camera.Radius = float.Parse(coordinates[2]);
+                if (Connected)
+                    Invoke((MethodInvoker)delegate
+                    {
+                        glControl1.Invalidate();
+                    });
                 if (!Connected)
                     Invoke((MethodInvoker)delegate
                     {
@@ -180,23 +186,48 @@ namespace Client
                         graphicObjects = new List<GraphicObject>();
                         MapUnit[] units = JsonConvert.DeserializeObject<MapUnit[]>(msg.Remove(0, 3));
                         int columnsCount = units.Max((unit) => unit.x) + 1;
-                        int rowsCount = units.Max((unit) => unit.y) + 1;
+                        int rowsCount = units.Max((unit) => unit.z) + 1;
                         Invoke((MethodInvoker)delegate
                         {
-                            models[3] = Model.CreateFlat(rowsCount, columnsCount);
+                            models.Add(Model.CreateFlat(rowsCount, columnsCount));
                         });
-                        graphicObjects.Add(new GraphicObject(models[3], (0, 0), (0, 0), 0)); //плоская модель
-                        playerObject = new GraphicObject(models[1], (11, 11), (rowsCount, columnsCount), 0); //кубик игрока
-                        graphicObjects.Add(playerObject);
+                        //Получаем модели объектов
+                        Model cubeModel = null, playerModel = null, parallelepipedModel = null, flatModel = null;
+                        foreach (Model model in models)
+                        {
+                            switch (model.Shape)
+                            {
+                                case ShapeMode.Cube:
+                                    cubeModel = model;
+                                    break;
+                                case ShapeMode.Player:
+                                    playerModel = model;
+                                    break;
+                                case ShapeMode.Parallelepiped:
+                                    parallelepipedModel = model;
+                                    break;
+                                case ShapeMode.Flat:
+                                    flatModel = model;
+                                    break;
+                            }
+                        }
+                        if (cubeModel == null || cubeModel == null || cubeModel == null || flatModel == null)
+                            throw new Exception("Одна из ключевых моделей не определена");
+
+                        graphicObjects.Add(new GraphicObject(flatModel, (0, 0), (0, 0), 0)); //плоская модель
                         foreach (MapUnit unit in units)
                         {
                             switch ((ShapeMode)unit.value)
                             {
                                 case ShapeMode.Cube:
-                                    graphicObjects.Add(new GraphicObject(models[0], (unit.x, unit.y), (rowsCount, columnsCount), 0));
+                                    graphicObjects.Add(new GraphicObject(cubeModel, (unit.x, unit.z), (rowsCount, columnsCount), 0));
+                                    break;
+                                case ShapeMode.Player:
+                                    playerObject = new GraphicObject(playerModel, (unit.x, unit.z), (rowsCount, columnsCount), 0); //кубик игрока
+                                    graphicObjects.Add(playerObject);
                                     break;
                                 case ShapeMode.Parallelepiped:
-                                    graphicObjects.Add(new GraphicObject(models[2], (unit.x, unit.y), (rowsCount, columnsCount), 0));
+                                    graphicObjects.Add(new GraphicObject(parallelepipedModel, (unit.x, unit.z), (rowsCount, columnsCount), 0));
                                     break;
                             }
                         }
@@ -213,6 +244,15 @@ namespace Client
                     }
                     else if (msg.StartsWith("coords"))
                         CoordinatesReceived(msg);
+                    else if (msg.StartsWith("move"))
+                    {
+                        MoveDirection direction = (MoveDirection)Enum.Parse(typeof(MoveDirection), msg.Remove(0, 4));
+                        if (playerObject.CanMove(direction))
+                        {
+                            playerObject.Move(direction);
+                            waitUntilMoveReceive = false;
+                        }
+                    }
                 }
             };
         }
@@ -251,11 +291,15 @@ namespace Client
                 move = (int)(MoveDirection.Down);
             if (state.IsKeyDown(Key.D))
                 move = (int)(MoveDirection.Right);
-            if (move != 0)
+            if (move != 0 && !waitUntilMoveReceive)
             {
                 MoveDirection moveDirection = (MoveDirection)move;
                 if (playerObject.CanMove(moveDirection))
-                    playerObject.Move(moveDirection);
+                {
+                    //playerObject.Move(moveDirection);
+                    ClientMode.Client.SendMessage($"move{moveDirection}");
+                    waitUntilMoveReceive = true;
+                }
             }
             if (playerObject.IsMoving)
                 playerObject.Simulate(millisecondsElapsed / 1000);
@@ -280,13 +324,12 @@ namespace Client
             ChangeCullingFaces(true);
             Model.OutputMode = OutputMode.Triangles;
 
-            models = new Model[]
+            models = new List<Model>()
             {
                 Model.CreateCube(),
                 Model.CreatePlayer(),
-                Model.CreateParallelepiped(),
-                null
-            };  
+                Model.CreateParallelepiped()
+            };
         }
 
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
@@ -330,6 +373,26 @@ namespace Client
             string outputMode = Model.OutputMode == OutputMode.Lines ? "Вывод линий" : "Вывод треугольников";
             string cullingMode = isCullingFaces ? "Отсечение граней" : "Нет отсечения граней";
             Text = $"Лабораторная работа №5, клиент; FPS: {frameRate.ToString()}; {outputMode}; {cullingMode}";
+        }
+
+        private void MainForm_Activated(object sender, EventArgs e)
+        {
+            if (Connected)
+            {
+                Application.Idle += LastInstance.mainForm_onIdle;
+                if (stopwatch == null)
+                    stopwatch = Stopwatch.StartNew();
+                else stopwatch.Restart();
+            }
+        }
+
+        private void MainForm_Deactivate(object sender, EventArgs e)
+        {
+            if (Connected)
+            {
+                Application.Idle -= LastInstance.mainForm_onIdle;
+                stopwatch?.Stop();
+            }
         }
     }
 }

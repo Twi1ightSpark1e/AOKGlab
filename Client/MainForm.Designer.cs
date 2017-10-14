@@ -201,6 +201,8 @@
             this.Controls.Add(this.changeModelButton);
             this.Name = "MainForm";
             this.Text = "Лабораторная работа №5, клиент";
+            this.Activated += new System.EventHandler(this.MainForm_Activated);
+            this.Deactivate += new System.EventHandler(this.MainForm_Deactivate);
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.MainForm_FormClosed);
             this.ResumeLayout(false);
             this.PerformLayout();

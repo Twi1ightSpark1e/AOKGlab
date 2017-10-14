@@ -12,7 +12,7 @@ namespace Server
 		{
 			server.OnReceive += (client, message) =>
 			{
-				server.SendAllExcept(client, message);
+				server.SendAll(message);
             };
             string result = server.Start(owner);
             if (result != null)
