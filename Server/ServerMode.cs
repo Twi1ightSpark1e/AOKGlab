@@ -10,10 +10,10 @@ namespace Server
 
 		public static bool Start(Form owner)
 		{
-			server.OnReceive += (client, message) =>
-			{
-				server.SendAll(message);
-            };
+			//server.OnReceive += (client, message) =>
+			//{
+			//	server.SendAll(message);
+   //         };
             string result = server.Start(owner);
             if (result != null)
             {

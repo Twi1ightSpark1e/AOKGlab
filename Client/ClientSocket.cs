@@ -53,6 +53,7 @@ namespace Client
 				foreach (IPAddress address in list)
 				{
 					client = new TcpClient();
+                    client.ReceiveBufferSize = client.SendBufferSize = 64536;
 					var connectionTask = client.ConnectAsync(address, port);
 					connectionTask.Wait(3000);
 					if (connectionTask.IsCompleted)

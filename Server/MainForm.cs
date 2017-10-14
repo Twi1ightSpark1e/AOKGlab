@@ -186,6 +186,7 @@ namespace Server
                     cameraCoordinates.radianX = float.Parse(coordinates[0]);
                     cameraCoordinates.radianY = float.Parse(coordinates[1]);
                     cameraCoordinates.radius = float.Parse(coordinates[2]);
+                    ServerMode.Server.SendAll(msg);
                 }
                 else if (msg.StartsWith("move"))
                 {
@@ -227,7 +228,9 @@ namespace Server
                             }
                         }
                     }
+                    ServerMode.Server.SendAll(msg);
                 }
+                else ServerMode.Server.SendAll(msg);
             }
         }
 

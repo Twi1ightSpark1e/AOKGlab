@@ -25,7 +25,7 @@ namespace Client
         public static MainForm LastInstance { get; private set; }
 
         private List<string> log = new List<string>();
-
+        private bool isActive;
         private static bool connected;
         public static bool Connected
         {
@@ -263,42 +263,45 @@ namespace Client
             stopwatch.Restart();
             var state = Keyboard.GetState();
             Vector3 eye = camera.Eye;
-            Directions dirs = Directions.None;
-            dirs |= state.IsKeyDown(Key.Up) ? Directions.Up : Directions.None;
-            dirs |= state.IsKeyDown(Key.Down) ? Directions.Down : Directions.None;
-            dirs |= state.IsKeyDown(Key.Left) ? Directions.Left : Directions.None;
-            dirs |= state.IsKeyDown(Key.Right) ? Directions.Right : Directions.None;
-            dirs |= (state.IsKeyDown(Key.Plus) || state.IsKeyDown(Key.KeypadPlus)) ? Directions.Forward : Directions.None;
-            dirs |= (state.IsKeyDown(Key.Minus) || state.IsKeyDown(Key.KeypadMinus)) ? Directions.Backward : Directions.None;
-            label2.Text = "UP: " + state.IsKeyDown(Key.Up).ToString();
-            label3.Text = "DOWN: " + state.IsKeyDown(Key.Down).ToString();
-            label4.Text = "LEFT: " + state.IsKeyDown(Key.Left).ToString();
-            label5.Text = "RIGHT: " + state.IsKeyDown(Key.Right).ToString();
-            label6.Text = "PLUS: " + (state.IsKeyDown(Key.Plus) || state.IsKeyDown(Key.KeypadPlus)).ToString();
-            label7.Text = "MINUS: " + (state.IsKeyDown(Key.Minus) || state.IsKeyDown(Key.KeypadMinus)).ToString();
-            label8.Text = "playerX: " + playerObject.Position.x.ToString();
-            label9.Text = "playerY: 0"/* + eye.Y.ToString()*/;
-            label10.Text = "playerZ: " + playerObject.Position.z.ToString();
-            camera.CurrentDirection = dirs;
-            camera.Simulate(millisecondsElapsed / 1000);
-
-            int move = 0;
-            if (state.IsKeyDown(Key.W))
-                move = (int)(MoveDirection.Up);
-            if (state.IsKeyDown(Key.A))
-                move = (int)(MoveDirection.Left);
-            if (state.IsKeyDown(Key.S))
-                move = (int)(MoveDirection.Down);
-            if (state.IsKeyDown(Key.D))
-                move = (int)(MoveDirection.Right);
-            if (move != 0 && !waitUntilMoveReceive)
+            if (isActive)
             {
-                MoveDirection moveDirection = (MoveDirection)move;
-                if (playerObject.CanMove(moveDirection))
+                Directions dirs = Directions.None;
+                dirs |= state.IsKeyDown(Key.Up) ? Directions.Up : Directions.None;
+                dirs |= state.IsKeyDown(Key.Down) ? Directions.Down : Directions.None;
+                dirs |= state.IsKeyDown(Key.Left) ? Directions.Left : Directions.None;
+                dirs |= state.IsKeyDown(Key.Right) ? Directions.Right : Directions.None;
+                dirs |= (state.IsKeyDown(Key.Plus) || state.IsKeyDown(Key.KeypadPlus)) ? Directions.Forward : Directions.None;
+                dirs |= (state.IsKeyDown(Key.Minus) || state.IsKeyDown(Key.KeypadMinus)) ? Directions.Backward : Directions.None;
+                label2.Text = "UP: " + state.IsKeyDown(Key.Up).ToString();
+                label3.Text = "DOWN: " + state.IsKeyDown(Key.Down).ToString();
+                label4.Text = "LEFT: " + state.IsKeyDown(Key.Left).ToString();
+                label5.Text = "RIGHT: " + state.IsKeyDown(Key.Right).ToString();
+                label6.Text = "PLUS: " + (state.IsKeyDown(Key.Plus) || state.IsKeyDown(Key.KeypadPlus)).ToString();
+                label7.Text = "MINUS: " + (state.IsKeyDown(Key.Minus) || state.IsKeyDown(Key.KeypadMinus)).ToString();
+                label8.Text = "playerX: " + playerObject.Position.x.ToString();
+                label9.Text = "playerY: 0"/* + eye.Y.ToString()*/;
+                label10.Text = "playerZ: " + playerObject.Position.z.ToString();
+                camera.CurrentDirection = dirs;
+                camera.Simulate(millisecondsElapsed / 1000);
+                
+                int move = 0;
+                if (state.IsKeyDown(Key.W))
+                    move = (int)(MoveDirection.Up);
+                if (state.IsKeyDown(Key.A))
+                    move = (int)(MoveDirection.Left);
+                if (state.IsKeyDown(Key.S))
+                    move = (int)(MoveDirection.Down);
+                if (state.IsKeyDown(Key.D))
+                    move = (int)(MoveDirection.Right);
+                if (move != 0 && !waitUntilMoveReceive)
                 {
-                    //playerObject.Move(moveDirection);
-                    ClientMode.Client.SendMessage($"move{moveDirection}");
-                    waitUntilMoveReceive = true;
+                    MoveDirection moveDirection = (MoveDirection)move;
+                    if (playerObject.CanMove(moveDirection))
+                    {
+                        //playerObject.Move(moveDirection);
+                        ClientMode.Client.SendMessage($"move{moveDirection}");
+                        waitUntilMoveReceive = true;
+                    }
                 }
             }
             if (playerObject.IsMoving)
@@ -377,22 +380,24 @@ namespace Client
 
         private void MainForm_Activated(object sender, EventArgs e)
         {
-            if (Connected)
-            {
-                Application.Idle += LastInstance.mainForm_onIdle;
-                if (stopwatch == null)
-                    stopwatch = Stopwatch.StartNew();
-                else stopwatch.Restart();
-            }
+            //if (Connected)
+            //{
+            //    Application.Idle += LastInstance.mainForm_onIdle;
+            //    if (stopwatch == null)
+            //        stopwatch = Stopwatch.StartNew();
+            //    else stopwatch.Restart();
+            //}
+            isActive = true;
         }
 
         private void MainForm_Deactivate(object sender, EventArgs e)
         {
-            if (Connected)
-            {
-                Application.Idle -= LastInstance.mainForm_onIdle;
-                stopwatch?.Stop();
-            }
+            //if (Connected)
+            //{
+            //    Application.Idle -= LastInstance.mainForm_onIdle;
+            //    stopwatch?.Stop();
+            //}
+            isActive = false;
         }
     }
 }
