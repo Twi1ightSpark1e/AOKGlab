@@ -283,16 +283,52 @@ namespace Client
                 label10.Text = "playerZ: " + playerObject.Position.z.ToString();
                 camera.CurrentDirection = dirs;
                 camera.Simulate(millisecondsElapsed / 1000);
-                
+                int position = camera.ViewPosition();
                 int move = 0;
-                if (state.IsKeyDown(Key.W))
-                    move = (int)(MoveDirection.Up);
-                if (state.IsKeyDown(Key.A))
-                    move = (int)(MoveDirection.Left);
-                if (state.IsKeyDown(Key.S))
-                    move = (int)(MoveDirection.Down);
-                if (state.IsKeyDown(Key.D))
-                    move = (int)(MoveDirection.Right);
+                switch (position)
+                {
+                    case 1:
+                        if (state.IsKeyDown(Key.W))
+                            move = (int)(MoveDirection.Down);
+                        if (state.IsKeyDown(Key.A))
+                            move = (int)(MoveDirection.Right);
+                        if (state.IsKeyDown(Key.S))
+                            move = (int)(MoveDirection.Up);
+                        if (state.IsKeyDown(Key.D))
+                            move = (int)(MoveDirection.Left);
+                        break;
+                    case 2:
+                        if (state.IsKeyDown(Key.W))
+                            move = (int)(MoveDirection.Left);
+                        if (state.IsKeyDown(Key.A))
+                            move = (int)(MoveDirection.Down);
+                        if (state.IsKeyDown(Key.S))
+                            move = (int)(MoveDirection.Right);
+                        if (state.IsKeyDown(Key.D))
+                            move = (int)(MoveDirection.Up);
+                        break;
+                    case 3:
+                        if (state.IsKeyDown(Key.W))
+                            move = (int)(MoveDirection.Up);
+                        if (state.IsKeyDown(Key.A))
+                            move = (int)(MoveDirection.Left);
+                        if (state.IsKeyDown(Key.S))
+                            move = (int)(MoveDirection.Down);
+                        if (state.IsKeyDown(Key.D))
+                            move = (int)(MoveDirection.Right);
+                        break;
+                    case 4:
+                        if (state.IsKeyDown(Key.W))
+                            move = (int)(MoveDirection.Right);
+                        if (state.IsKeyDown(Key.A))
+                            move = (int)(MoveDirection.Up);
+                        if (state.IsKeyDown(Key.S))
+                            move = (int)(MoveDirection.Left);
+                        if (state.IsKeyDown(Key.D))
+                            move = (int)(MoveDirection.Down);
+                        break;
+
+                }
                 if (move != 0 && !waitUntilMoveReceive)
                 {
                     MoveDirection moveDirection = (MoveDirection)move;

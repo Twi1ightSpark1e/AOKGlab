@@ -38,7 +38,22 @@ namespace Client
             Matrix4 modelview = Matrix4.LookAt(Eye, Target, Up);
             GL.LoadMatrix(ref modelview);
         }
-
+        public int ViewPosition()
+        {
+            while (RadianX > 6.28f)
+                RadianX -= 6.28f;
+            while (RadianX < 0)
+                RadianX += 6.28f;
+            if ((RadianX > 3.14 * 5 / 4) && (RadianX <= 3.14 * 7 / 4))
+                return 1;
+            else if ((RadianX > 3.14 * 7 / 4) || (RadianX <= 3.14 * 1 / 4))
+                return 2;
+            else if ((RadianX > 3.14 * 1 / 4) && (RadianX <= 3.14 * 3 / 4))
+                return 3;
+            else if ((RadianX > 3.14 * 3 / 4) && (RadianX <= 3.14 * 5 / 4))
+                return 4;
+            return 1;
+        }
         public void SetEye(float radianX, float radianY, float radius)
         {
             var eye = Eye;
