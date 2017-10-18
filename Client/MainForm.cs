@@ -60,7 +60,6 @@ namespace Client
         private static Camera camera;
         private static Stopwatch stopwatch;
         private static object locker = new object();
-        private static string lastSentCoordinates;
         private static bool isCullingFaces;
         private bool waitUntilMoveReceive;
 
@@ -105,8 +104,8 @@ namespace Client
             camera = new Camera()
             {
                 Radius = 70f,
-                RadianX = 1f,
-                RadianY = 1f,
+                RadianX = 1.57f,
+                RadianY = 1.4f,
                 Eye    = new Vector3((float)(Math.Cos(0) * 25f * Math.Cos(0)), 
                                      (float)(Math.Sin(0) * 25f), 
                                      (float)(Math.Cos(0) * 25f * Math.Sin(0))),
@@ -130,7 +129,6 @@ namespace Client
         private void glControl1_Paint(object sender, PaintEventArgs e)
         {
             //Установим фоновый цвет
-            //GL.ClearColor(new OpenTK.Graphics.Color4(105, 29, 142, 0)); //сиреневый цвет
             GL.ClearColor(new OpenTK.Graphics.Color4(0, 0, 0, 0));
             //Не будем ничего рисовать, пока не подключимся к серверу
             if (Connected)
@@ -231,7 +229,11 @@ namespace Client
                                     break;
                             }
                         }
-                        ClientMode.Client.SendMessage("ackarr");
+                        if (!Connected)
+                            Invoke((MethodInvoker)delegate
+                            {
+                                Connected = true;
+                            });
                     }
                     else if (msg.StartsWith("close"))
                     {
@@ -242,8 +244,6 @@ namespace Client
                             graphicObjects.Clear();
                         });
                     }
-                    else if (msg.StartsWith("coords"))
-                        CoordinatesReceived(msg);
                     else if (msg.StartsWith("move"))
                     {
                         MoveDirection direction = (MoveDirection)Enum.Parse(typeof(MoveDirection), msg.Remove(0, 4));
@@ -334,7 +334,6 @@ namespace Client
                     MoveDirection moveDirection = (MoveDirection)move;
                     if (playerObject.CanMove(moveDirection))
                     {
-                        //playerObject.Move(moveDirection);
                         ClientMode.Client.SendMessage($"move{moveDirection}");
                         waitUntilMoveReceive = true;
                     }
@@ -342,15 +341,6 @@ namespace Client
             }
             if (playerObject.IsMoving)
                 playerObject.Simulate(millisecondsElapsed / 1000);
-
-            if (camera.ChangedCoordinates != string.Empty && lastSentCoordinates != camera.ChangedCoordinates)
-            {
-                if (Connected)
-                {
-                    ClientMode.SendCoordinates(camera.ChangedCoordinates);
-                    lastSentCoordinates = camera.ChangedCoordinates;
-                }
-            }
             glControl1.Invalidate();
             Text = CalculateFrameRate();
 
@@ -416,23 +406,11 @@ namespace Client
 
         private void MainForm_Activated(object sender, EventArgs e)
         {
-            //if (Connected)
-            //{
-            //    Application.Idle += LastInstance.mainForm_onIdle;
-            //    if (stopwatch == null)
-            //        stopwatch = Stopwatch.StartNew();
-            //    else stopwatch.Restart();
-            //}
             isActive = true;
         }
 
         private void MainForm_Deactivate(object sender, EventArgs e)
         {
-            //if (Connected)
-            //{
-            //    Application.Idle -= LastInstance.mainForm_onIdle;
-            //    stopwatch?.Stop();
-            //}
             isActive = false;
         }
     }

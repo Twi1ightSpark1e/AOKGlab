@@ -25,7 +25,6 @@ namespace Client
         public Vector3 Eye { get; set; }
         public Vector3 Target { get; set; }
         public Vector3 Up { get; set; }
-        public string ChangedCoordinates { get; private set; }
 
         public Directions CurrentDirection { get; set; }
         public float Speed => 2f;
@@ -93,7 +92,6 @@ namespace Client
                 if (Radius < 100)
                     Radius += (float)Math.Pow(Speed, 4) * secondsElapsed;
             }
-            ChangedCoordinates = $"{RadianX};{RadianY};{Radius}&";
         }
     }
 }
