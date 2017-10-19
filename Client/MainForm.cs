@@ -59,15 +59,12 @@ namespace Client
         private static List<Model> models;
         private static Camera camera;
         private static Stopwatch stopwatch;
-        private static object locker = new object();
         private static bool isCullingFaces;
         private bool waitUntilMoveReceive;
 
         private static int lastTick;
         private static string lastFrameRate;
         private static int frameRate;
-
-        private GraphicObject playerObject;
 
         public static string CalculateFrameRate()
         {
@@ -82,6 +79,26 @@ namespace Client
             frameRate++;
             return lastFrameRate;
         }
+
+        private GraphicObject playerObject;
+        private (int x, int z) playerPosition;
+        private static MoveDirection movePositiveX() => MoveDirection.Right;
+        private static MoveDirection movePositiveZ() => MoveDirection.Down;
+        private static MoveDirection moveNegativeX() => MoveDirection.Left;
+        private static MoveDirection moveNegativeZ() => MoveDirection.Up;
+        private delegate MoveDirection MoveKeyHandler();
+        private Dictionary<char, MoveKeyHandler> keyHandlers = new Dictionary<char, MoveKeyHandler>();
+        private List<MoveKeyHandler> moves = new List<MoveKeyHandler>()
+        {
+            movePositiveZ,
+            movePositiveX,
+            moveNegativeZ,
+            moveNegativeX
+        };
+        private List<char> keys = new List<char>()
+        {
+            'W', 'A', 'S', 'D'
+        };
 
         public MainForm()
         {
@@ -111,6 +128,14 @@ namespace Client
                                      (float)(Math.Cos(0) * 25f * Math.Sin(0))),
                 Target = new Vector3( 0, 0, 0),
                 Up     = new Vector3( 0, 1, 0)
+            };
+            camera.OnChangedDirections += (state) =>
+            {
+                byte key = 0;
+                for (int i = (5 - state) % 4; i < ((5 - state) % 4 + 4); i++)
+                {
+                    keyHandlers[keys[key++]] = moves[i%4];
+                }
             };
         }
 
@@ -145,28 +170,6 @@ namespace Client
                     graphicObject.Show();
                 //Поменяем местами буферы
                 glControl1.SwapBuffers();
-            }
-        }
-
-        private void CoordinatesReceived(string message)
-        {
-            lock (locker)
-            {
-                message = message.Remove(0, 6);
-                string[] coordinates = message.Split(';');
-                camera.RadianX = float.Parse(coordinates[0]);
-                camera.RadianY = float.Parse(coordinates[1]);
-                camera.Radius = float.Parse(coordinates[2]);
-                if (Connected)
-                    Invoke((MethodInvoker)delegate
-                    {
-                        glControl1.Invalidate();
-                    });
-                if (!Connected)
-                    Invoke((MethodInvoker)delegate
-                    {
-                        Connected = true;
-                    });
             }
         }
 
@@ -278,57 +281,20 @@ namespace Client
                 label5.Text = "RIGHT: " + state.IsKeyDown(Key.Right).ToString();
                 label6.Text = "PLUS: " + (state.IsKeyDown(Key.Plus) || state.IsKeyDown(Key.KeypadPlus)).ToString();
                 label7.Text = "MINUS: " + (state.IsKeyDown(Key.Minus) || state.IsKeyDown(Key.KeypadMinus)).ToString();
-                label8.Text = "playerX: " + playerObject.Position.x.ToString();
-                label9.Text = "playerY: 0"/* + eye.Y.ToString()*/;
-                label10.Text = "playerZ: " + playerObject.Position.z.ToString();
+                label8.Text = "radianX: " + camera.RadianX;
+                label9.Text = "radianY: "+ camera.RadianY;
+                label10.Text = "radius: " + camera.Radius;
                 camera.CurrentDirection = dirs;
                 camera.Simulate(millisecondsElapsed / 1000);
-                int position = camera.ViewPosition();
                 int move = 0;
-                switch (position)
-                {
-                    case 1:
-                        if (state.IsKeyDown(Key.W))
-                            move = (int)(MoveDirection.Down);
-                        if (state.IsKeyDown(Key.A))
-                            move = (int)(MoveDirection.Right);
-                        if (state.IsKeyDown(Key.S))
-                            move = (int)(MoveDirection.Up);
-                        if (state.IsKeyDown(Key.D))
-                            move = (int)(MoveDirection.Left);
-                        break;
-                    case 2:
-                        if (state.IsKeyDown(Key.W))
-                            move = (int)(MoveDirection.Left);
-                        if (state.IsKeyDown(Key.A))
-                            move = (int)(MoveDirection.Down);
-                        if (state.IsKeyDown(Key.S))
-                            move = (int)(MoveDirection.Right);
-                        if (state.IsKeyDown(Key.D))
-                            move = (int)(MoveDirection.Up);
-                        break;
-                    case 3:
-                        if (state.IsKeyDown(Key.W))
-                            move = (int)(MoveDirection.Up);
-                        if (state.IsKeyDown(Key.A))
-                            move = (int)(MoveDirection.Left);
-                        if (state.IsKeyDown(Key.S))
-                            move = (int)(MoveDirection.Down);
-                        if (state.IsKeyDown(Key.D))
-                            move = (int)(MoveDirection.Right);
-                        break;
-                    case 4:
-                        if (state.IsKeyDown(Key.W))
-                            move = (int)(MoveDirection.Right);
-                        if (state.IsKeyDown(Key.A))
-                            move = (int)(MoveDirection.Up);
-                        if (state.IsKeyDown(Key.S))
-                            move = (int)(MoveDirection.Left);
-                        if (state.IsKeyDown(Key.D))
-                            move = (int)(MoveDirection.Down);
-                        break;
-
-                }
+                if (state.IsKeyDown(Key.W))
+                    move = (int)(keyHandlers['W']());
+                if (state.IsKeyDown(Key.A))
+                    move = (int)(keyHandlers['A']());
+                if (state.IsKeyDown(Key.S))
+                    move = (int)(keyHandlers['S']());
+                if (state.IsKeyDown(Key.D))
+                    move = (int)(keyHandlers['D']());
                 if (move != 0 && !waitUntilMoveReceive)
                 {
                     MoveDirection moveDirection = (MoveDirection)move;

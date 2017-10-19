@@ -19,6 +19,10 @@ namespace Client
 
     class Camera
     {
+        internal delegate void OnChangedDirectionsDelegate(int state);
+        public event OnChangedDirectionsDelegate OnChangedDirections;
+        private int lastState = 1;
+
         public float RadianX { get; set; }
         public float RadianY { get; set; }
         public float Radius { get; set; }
@@ -91,6 +95,13 @@ namespace Client
             {
                 if (Radius < 100)
                     Radius += (float)Math.Pow(Speed, 4) * secondsElapsed;
+            }
+            //Проверка на измененные направления
+            int newState = ViewPosition();
+            if (newState != lastState)
+            {
+                lastState = newState;
+                OnChangedDirections?.Invoke(lastState);
             }
         }
     }
