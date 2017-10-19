@@ -12,7 +12,7 @@ namespace Client
 {
     enum ShapeMode
     {
-        Flat, Cube, Player, Parallelepiped
+        Player = -1, Empty, LightBarrier, HeavyBarrier, Wall
     }
 
     enum OutputMode
@@ -63,19 +63,20 @@ namespace Client
             Shape = shape;
             switch (shape)
             {
-                case ShapeMode.Flat:
-                case ShapeMode.Parallelepiped:
+                case ShapeMode.Empty:
+                case ShapeMode.Wall:
+                case ShapeMode.HeavyBarrier:
                     IsMovable = false;
                     break;
                 case ShapeMode.Player:
-                case ShapeMode.Cube:
+                case ShapeMode.LightBarrier:
                     IsMovable = true;
                     break;
             }
             InitializeVBO();
         }
 
-        public static Model CreateCube()
+        public static Model CreateLightBarrier()
         {
             return new Model(new ModelPoint[]
             {
@@ -118,7 +119,53 @@ namespace Client
                 12, 13, 14, 12, 14, 15,  //left
                 18, 17, 16, 19, 18, 16,  //upper
                 20, 21, 22, 20, 22, 23   //bottom
-            }, ShapeMode.Cube);
+            }, ShapeMode.LightBarrier);
+        }
+
+        public static Model CreateHeavyBarrier()
+        {
+            return new Model(new ModelPoint[]
+            {
+                //front
+                new ModelPoint((-1, -1 , 1), (0, 0, 0)),
+                new ModelPoint((1, -1, 1), (0, 0, 0)),
+                new ModelPoint((1, 1, 1), (0, 0, 0)),
+                new ModelPoint((-1, 1, 1), (0, 0, 0)),
+                //right
+                new ModelPoint((1, 1, 1), (0, 0, 0)),
+                new ModelPoint((1, 1, -1), (0, 0, 0)),
+                new ModelPoint((1, -1, -1), (0, 0, 0)),
+                new ModelPoint((1, -1, 1), (0, 0, 0)),
+                //back
+                new ModelPoint((-1, -1, -1), (0, 0, 0)),
+                new ModelPoint((1, -1, -1), (0, 0, 0)),
+                new ModelPoint(( 1, 1, -1), (0, 0, 0)),
+                new ModelPoint((-1, 1, -1), (0, 0, 0)),
+                //left
+                new ModelPoint((-1, -1, -1), (0, 0, 0)),
+                new ModelPoint((-1, -1, 1), (0, 0, 0)),
+                new ModelPoint((-1, 1, 1), (0, 0, 0)),
+                new ModelPoint((-1, 1, -1), (0, 0, 0)),
+                //upper
+                new ModelPoint(( 1, 1, 1), (0, 0, 0)),
+                new ModelPoint((-1, 1, 1), (0, 0, 0)),
+                new ModelPoint((-1, 1, -1), (0, 0, 0)),
+                new ModelPoint((1, 1, -1), (0, 0, 0)),
+                //bottom
+                new ModelPoint((-1, -1, -1), (0, 0, 0)),
+                new ModelPoint((1, -1, -1), (0, 0, 0)),
+                new ModelPoint(( 1, -1, 1), (0, 0, 0)),
+                new ModelPoint((-1, -1, 1), (0, 0, 0)),
+            },
+            new uint[]
+            {
+                0,  1,  2,  0,  2,  3,   //front
+                6,  5,  4,  7,  6,  4,   //right
+                10, 9,  8,  11, 10, 8,   //back
+                12, 13, 14, 12, 14, 15,  //left
+                18, 17, 16, 19, 18, 16,  //upper
+                20, 21, 22, 20, 22, 23   //bottom
+            }, ShapeMode.HeavyBarrier);
         }
 
         public static Model CreatePlayer()
@@ -167,7 +214,7 @@ namespace Client
             }, ShapeMode.Player);
         }
 
-        public static Model CreateParallelepiped()
+        public static Model CreateWall()
         {
             return new Model(new ModelPoint[]
             {
@@ -210,7 +257,7 @@ namespace Client
                 12, 13, 14, 12, 14, 15,  //left
                 18, 17, 16, 19, 18, 16,  //upper
                 20, 21, 22, 20, 22, 23   //bottom
-            }, ShapeMode.Parallelepiped);
+            }, ShapeMode.Wall);
         }
 
         public static Model CreateFlat(int width, int height)
@@ -231,7 +278,7 @@ namespace Client
                     startIndex += 4;
                 }
             }
-            return new Model(points.ToArray(), indices.ToArray(), ShapeMode.Flat);
+            return new Model(points.ToArray(), indices.ToArray(), ShapeMode.Empty);
         }
         
         public void Show()

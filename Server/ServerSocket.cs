@@ -18,7 +18,7 @@ namespace Server
 		private bool started;
 		private List<TcpClient> clients = new List<TcpClient>();
 		private List<Thread> listeners = new List<Thread>();
-		private int clientsCount, listenersCount, nicksCount;
+		private int clientsCount, listenersCount;
 		private Thread accepter;
         private Form owner;
 
@@ -56,7 +56,7 @@ namespace Server
 				accepter = new Thread(Accepter);
 				accepter.Start();
 
-				clientsCount = listenersCount = nicksCount = 0;
+				clientsCount = listenersCount = 0;
 			}
 			catch (SocketException e)
 			{
@@ -80,7 +80,6 @@ namespace Server
 				}
 				clients.Add(newClient);
 				clientsCount++;
-				nicksCount++;
 				listeners.Add(new Thread(ClientListener));
 				listenersCount++;
 				listeners[listeners.Count - 1].Start(clients.Count - 1);
@@ -171,7 +170,7 @@ namespace Server
 			if ((clients.Count > num) && (clients[num] != null))
 			{
 				clients[num] = null;
-				nicksCount--;
+                clientsCount--;
 			}
 
 			CheckForNullCounts();
@@ -179,7 +178,7 @@ namespace Server
 
 		private void CheckForNullCounts()
 		{
-			if ((clientsCount == 0) && (listenersCount == 0) && (nicksCount == 0))
+			if ((clientsCount == 0) && (listenersCount == 0))
 			{
 				clients.Clear();
 				listeners.Clear();

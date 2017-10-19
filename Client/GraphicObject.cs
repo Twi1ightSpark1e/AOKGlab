@@ -20,6 +20,9 @@ namespace Client
     }
     class GraphicObject
     {
+        internal delegate void OnSimulationFinishedDelegate();
+        public event OnSimulationFinishedDelegate OnSimulationFinished;
+
         public bool IsPlayerObject => CurrentModel.Shape == ShapeMode.Player;
         private MoveDirection currentMoveDirection;
         public bool IsMoving => currentMoveDirection != MoveDirection.None;
@@ -93,7 +96,7 @@ namespace Client
             {
                 if (graphicObject.Position.x == targetX &&
                     graphicObject.Position.z == targetZ &&
-                    graphicObject.CurrentModel.Shape != ShapeMode.Flat)
+                    graphicObject.CurrentModel.Shape != ShapeMode.Empty)
                 {
                     nextObject = graphicObject;
                     break;
@@ -101,7 +104,7 @@ namespace Client
             }
             if (nextObject == null) //нет фигуры, только плоскость
                 return true;
-            if (!IsPlayerObject && nextObject.CurrentModel.Shape != ShapeMode.Flat)
+            if (!IsPlayerObject && nextObject.CurrentModel.Shape != ShapeMode.Empty)
                 return false;
             if (nextObject.CanMove(direction))
                 return true;
@@ -124,6 +127,16 @@ namespace Client
                     case MoveDirection.Right:
                         destination = (position.x + Math.Sign((sbyte)currentMoveDirection), position.z);
                         break;
+                }
+                foreach (GraphicObject graphicObject in MainForm.Scene)
+                {
+                    if (graphicObject.Position.x == destination.x &&
+                        graphicObject.Position.z == destination.z &&
+                        graphicObject.CurrentModel.Shape != ShapeMode.Empty)
+                    {
+                        nextObject = graphicObject;
+                        break;
+                    }
                 }
             }
         }
@@ -171,8 +184,10 @@ namespace Client
                                 nextObject.Position = (position.x + Math.Sign((sbyte)currentMoveDirection), position.z);
                                 break;
                         }
+                        nextObject = null;
                     }
                     currentMoveDirection = MoveDirection.None;
+                    OnSimulationFinished?.Invoke();
                 }
             }
         }

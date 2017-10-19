@@ -56,7 +56,11 @@ namespace Client
         
         private static List<GraphicObject> graphicObjects;
         internal static List<GraphicObject> Scene => graphicObjects;
+
         private static List<Model> models;
+        private Model playerModel;
+        private int fieldRowsCount, fieldColumnsCount;
+
         private static Camera camera;
         private static Stopwatch stopwatch;
         private static bool isCullingFaces;
@@ -80,8 +84,8 @@ namespace Client
             return lastFrameRate;
         }
 
-        private GraphicObject playerObject;
-        private (int x, int z) playerPosition;
+        private List<(int x, int z)> players = new List<(int x, int z)>();
+        private List<GraphicObject> playerObjects = new List<GraphicObject>();
         private static MoveDirection movePositiveX() => MoveDirection.Right;
         private static MoveDirection movePositiveZ() => MoveDirection.Down;
         private static MoveDirection moveNegativeX() => MoveDirection.Left;
@@ -166,8 +170,8 @@ namespace Client
                 //Настройка позиции "глаз"
                 camera.SetCamera();
                 //Отображаем все элементы
-                foreach (GraphicObject graphicObject in graphicObjects)
-                    graphicObject.Show();
+                for (int i = 0; i < graphicObjects.Count; i++)
+                    graphicObjects[i].Show();
                 //Поменяем местами буферы
                 glControl1.SwapBuffers();
             }
@@ -176,43 +180,89 @@ namespace Client
         private void connectButton_Click(object sender, EventArgs e)
         {
             addressTextBox.Enabled = connectButton.Enabled = false;
+            players.Clear();
             ClientMode.Start(addressTextBox.Text);
             ClientMode.Client.OnReceive += (message) =>
             {
                 string[] messages = message.Split('&');
                 foreach (string msg in messages)
                 {
-                    if (msg.StartsWith("arr"))
+                    if (msg.StartsWith("players"))
+                    {
+                        var coordinates = msg.Remove(0, 7).Split('(', ')').ToList().Where((str) => str != string.Empty);
+                        foreach (string coordinate in coordinates)
+                        {
+                            string[] xz = coordinate.Split(';');
+                            players.Add((int.Parse(xz[0]), int.Parse(xz[1])));
+                        }
+                        ClientMode.Client.SendMessage("ackplayers");
+                    }
+                    else if (msg.StartsWith("newplayer"))
+                    {
+                        var coordinates = msg.Remove(0, 10).Split('(', ')').ToList().Where((str) => str != string.Empty);
+                        string[] xz = coordinates.ElementAt(0).Split(';');
+                        players.Add((int.Parse(xz[0]), int.Parse(xz[1])));
+                        graphicObjects.Add(new GraphicObject(playerModel, (int.Parse(xz[0]), int.Parse(xz[1])), (fieldRowsCount, fieldColumnsCount), 0));
+                    }
+                    else if (msg.StartsWith("delplayer"))
+                    {
+                        var coordinates = msg.Remove(0, 10).Split('(', ')').ToList().Where((str) => str != string.Empty);
+                        string[] xz = coordinates.ElementAt(0).Split(';');
+                        foreach (var player in players)
+                        {
+                            if (int.Parse(xz[0]) == player.x && int.Parse(xz[1]) == player.z)
+                            {
+                                (int x, int z) coords = (int.Parse(xz[0]), int.Parse(xz[1]));
+                                for (int i = 0; i < players.Count; i++)
+                                    if (players[i].Equals(coords))
+                                    {
+                                        players.RemoveAt(i);
+                                        break;
+                                    }
+                                for (int i = 0; i < graphicObjects.Count; i++)
+                                    if (graphicObjects[i].Position.Equals(coords))
+                                    {
+                                        graphicObjects.RemoveAt(i);
+                                        break;
+                                    }
+                                break;
+                            }
+                        }
+                    }
+                    else if (msg.StartsWith("field"))
                     {
                         graphicObjects = new List<GraphicObject>();
-                        MapUnit[] units = JsonConvert.DeserializeObject<MapUnit[]>(msg.Remove(0, 3));
-                        int columnsCount = units.Max((unit) => unit.x) + 1;
-                        int rowsCount = units.Max((unit) => unit.z) + 1;
+                        MapUnit[] units = JsonConvert.DeserializeObject<MapUnit[]>(msg.Remove(0, 5));
+                        fieldColumnsCount = units.Max((unit) => unit.x) + 1;
+                        fieldRowsCount = units.Max((unit) => unit.z) + 1;
                         Invoke((MethodInvoker)delegate
                         {
-                            models.Add(Model.CreateFlat(rowsCount, columnsCount));
+                            models.Add(Model.CreateFlat(fieldRowsCount, fieldColumnsCount));
                         });
                         //Получаем модели объектов
-                        Model cubeModel = null, playerModel = null, parallelepipedModel = null, flatModel = null;
+                        Model lightBarrierModel = null, heavyBarrierModel = null, wallModel = null, flatModel = null;
                         foreach (Model model in models)
                         {
                             switch (model.Shape)
                             {
-                                case ShapeMode.Cube:
-                                    cubeModel = model;
+                                case ShapeMode.LightBarrier:
+                                    lightBarrierModel = model;
+                                    break;
+                                case ShapeMode.HeavyBarrier:
+                                    heavyBarrierModel = model;
                                     break;
                                 case ShapeMode.Player:
                                     playerModel = model;
                                     break;
-                                case ShapeMode.Parallelepiped:
-                                    parallelepipedModel = model;
+                                case ShapeMode.Wall:
+                                    wallModel = model;
                                     break;
-                                case ShapeMode.Flat:
+                                case ShapeMode.Empty:
                                     flatModel = model;
                                     break;
                             }
                         }
-                        if (cubeModel == null || cubeModel == null || cubeModel == null || flatModel == null)
+                        if (lightBarrierModel == null || heavyBarrierModel == null || playerModel == null || wallModel == null || flatModel == null)
                             throw new Exception("Одна из ключевых моделей не определена");
 
                         graphicObjects.Add(new GraphicObject(flatModel, (0, 0), (0, 0), 0)); //плоская модель
@@ -220,17 +270,29 @@ namespace Client
                         {
                             switch ((ShapeMode)unit.value)
                             {
-                                case ShapeMode.Cube:
-                                    graphicObjects.Add(new GraphicObject(cubeModel, (unit.x, unit.z), (rowsCount, columnsCount), 0));
+                                case ShapeMode.LightBarrier:
+                                    graphicObjects.Add(new GraphicObject(lightBarrierModel, (unit.x, unit.z), (fieldRowsCount, fieldColumnsCount), 0));
                                     break;
-                                case ShapeMode.Player:
-                                    playerObject = new GraphicObject(playerModel, (unit.x, unit.z), (rowsCount, columnsCount), 0); //кубик игрока
-                                    graphicObjects.Add(playerObject);
+                                case ShapeMode.HeavyBarrier:
+                                    graphicObjects.Add(new GraphicObject(heavyBarrierModel, (unit.x, unit.z), (fieldRowsCount, fieldColumnsCount), 0));
                                     break;
-                                case ShapeMode.Parallelepiped:
-                                    graphicObjects.Add(new GraphicObject(parallelepipedModel, (unit.x, unit.z), (rowsCount, columnsCount), 0));
+                                case ShapeMode.Wall:
+                                    graphicObjects.Add(new GraphicObject(wallModel, (unit.x, unit.z), (fieldRowsCount, fieldColumnsCount), 0));
                                     break;
                             }
+                        }
+                        GraphicObject playerObject = new GraphicObject(playerModel, players[0], (fieldRowsCount, fieldColumnsCount), 0);
+                        playerObject.OnSimulationFinished += () =>
+                        {
+                            waitUntilMoveReceive = false;
+                        };
+                        graphicObjects.Insert(0, playerObject);
+                        playerObjects.Add(playerObject);
+                        for (int i = 1; i < players.Count; i++)
+                        {
+                            var enemyObject = new GraphicObject(playerModel, players.ElementAt(i), (fieldRowsCount, fieldColumnsCount), 0);
+                            graphicObjects.Insert(0, enemyObject);
+                            playerObjects.Add(enemyObject);
                         }
                         if (!Connected)
                             Invoke((MethodInvoker)delegate
@@ -249,11 +311,28 @@ namespace Client
                     }
                     else if (msg.StartsWith("move"))
                     {
-                        MoveDirection direction = (MoveDirection)Enum.Parse(typeof(MoveDirection), msg.Remove(0, 4));
-                        if (playerObject.CanMove(direction))
+                        List<string> splitted = msg.Split('(', ')').ToList();
+                        splitted.RemoveAt(0); //нулевой элемент - координаты передвигающегося кубика; первый элемент - его направление движения
+                        string[] xz = splitted[0].Split(';');
+                        MoveDirection direction = (MoveDirection)Enum.Parse(typeof(MoveDirection), splitted[1]);
+                        foreach (GraphicObject graphicObject in graphicObjects)
                         {
-                            playerObject.Move(direction);
+                            if (graphicObject.Position.Equals((int.Parse(xz[0]), int.Parse(xz[1]))))
+                            {
+                                graphicObject.Move(direction);
+                                //waitUntilMoveReceive = false;
+                                break;
+                            }                            
+                        }
+                    }
+                    else if (msg.StartsWith("err"))
+                    {
+                        if (msg.Remove(0, 3) == "move")
                             waitUntilMoveReceive = false;
+                        else if (msg.Remove(0, 3) == "place")
+                        {
+                            MessageBox.Show("Сервер не может обработать нового игрока");
+                            Connected = false;
                         }
                     }
                 }
@@ -298,17 +377,17 @@ namespace Client
                 if (move != 0 && !waitUntilMoveReceive)
                 {
                     MoveDirection moveDirection = (MoveDirection)move;
-                    if (playerObject.CanMove(moveDirection))
-                    {
-                        ClientMode.Client.SendMessage($"move{moveDirection}");
-                        waitUntilMoveReceive = true;
-                    }
+                    waitUntilMoveReceive = true;
+                    ClientMode.Client.SendMessage($"move{moveDirection}");
+                    Debug.WriteLine("Move sent");
                 }
             }
-            if (playerObject.IsMoving)
-                playerObject.Simulate(millisecondsElapsed / 1000);
+            for (int i = 0; i < playerObjects.Count; i++)
+                if (playerObjects[i].IsMoving)
+                    playerObjects[i].Simulate(millisecondsElapsed / 1000);
             glControl1.Invalidate();
             Text = CalculateFrameRate();
+            label10.Text = waitUntilMoveReceive.ToString();
 
             //log.Add($"UP: {state.IsKeyDown(Key.Up).ToString():6} DOWN: {state.IsKeyDown(Key.Down).ToString():6} LEFT: {state.IsKeyDown(Key.Left).ToString():6} RIGHT: {state.IsKeyDown(Key.Right).ToString():6} PLUS: {(state.IsKeyDown(Key.Plus) || state.IsKeyDown(Key.KeypadPlus)).ToString():6} MINUS: {(state.IsKeyDown(Key.Minus) || state.IsKeyDown(Key.KeypadMinus)).ToString():6} X: {camera.Eye.X} Y: {camera.Eye.Y} Z: {camera.Eye.Z}");
         }
@@ -321,9 +400,10 @@ namespace Client
 
             models = new List<Model>()
             {
-                Model.CreateCube(),
+                Model.CreateLightBarrier(),
+                Model.CreateHeavyBarrier(),
                 Model.CreatePlayer(),
-                Model.CreateParallelepiped()
+                Model.CreateWall()
             };
         }
 

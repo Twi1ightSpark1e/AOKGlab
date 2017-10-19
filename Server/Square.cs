@@ -12,7 +12,7 @@ namespace Server
 {
     public enum SquareContent
     {
-        Empty, Barrier, Player, Wall
+        Player = -1, Empty, LightBarrier, HeavyBarrier, Wall
     }
 
     public partial class Square : UserControl
@@ -32,7 +32,10 @@ namespace Server
                     case SquareContent.Player:
                         ForeColor = Color.Blue;
                         break;
-                    case SquareContent.Barrier:
+                    case SquareContent.LightBarrier:
+                        ForeColor = Color.Yellow;
+                        break;
+                    case SquareContent.HeavyBarrier:
                         ForeColor = Color.Black;
                         break;
                     case SquareContent.Empty:
