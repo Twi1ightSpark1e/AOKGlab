@@ -30,6 +30,12 @@ namespace Client
             this.colors = new Vector3(colors.r, colors.g, colors.b);
         }
 
+        public ModelPoint(Vector3 coordinates, (float r, float g, float b) colors)
+        {
+            this.coordinates = coordinates;
+            this.colors = new Vector3(colors.r, colors.g, colors.b);
+        }
+
         public static int Size()
         {
             return Vector3.SizeInBytes * 2;
@@ -49,14 +55,18 @@ namespace Client
     class Model
     {
         private ModelPoint[] points;
-        private uint[] indices;
+        private ushort[] indices;
         public int IdVertexBuffer { get; private set; }
         public int IdIndexBuffer { get; private set; }
         public static OutputMode OutputMode { get; set; }
         public bool IsMovable { get; private set; }
         public ShapeMode Shape { get; private set; }
 
-        public Model(ModelPoint[] points, uint[] indices, ShapeMode shape)
+        private static _3dsReader boxReader = new _3dsReader("Box.3DS");
+        private static _3dsReader chamferBoxReader = new _3dsReader("ChamferBox.3DS");
+        private static _3dsReader sphereReader = new _3dsReader("Sphere.3DS");
+
+        public Model(ModelPoint[] points, ushort[] indices, ShapeMode shape)
         {
             this.points = points;
             this.indices = indices;
@@ -78,194 +88,54 @@ namespace Client
 
         public static Model CreateLightBarrier()
         {
-            return new Model(new ModelPoint[]
+            ModelPoint[] points = new ModelPoint[chamferBoxReader.Vertices.Length];
+            int i = 0;
+            foreach (Vector3 vertex in chamferBoxReader.Vertices)
             {
-                //front
-                new ModelPoint((-1, -1 , 1), (1, 1, 1)),
-                new ModelPoint((1, -1, 1), (1, 1, 1)),
-                new ModelPoint((1, 1, 1), (1, 1, 1)),
-                new ModelPoint((-1, 1, 1), (1, 1, 1)),
-                //right
-                new ModelPoint((1, 1, 1), (1, 0, 0)),
-                new ModelPoint((1, 1, -1), (1, 0, 0)),
-                new ModelPoint((1, -1, -1), (1, 0, 0)),
-                new ModelPoint((1, -1, 1), (1, 0, 0)),
-                //back
-                new ModelPoint((-1, -1, -1), (0, 1, 0)),
-                new ModelPoint((1, -1, -1), (0, 1, 0)),
-                new ModelPoint(( 1, 1, -1), (0, 1, 0)),
-                new ModelPoint((-1, 1, -1), (0, 1, 0)),
-                //left
-                new ModelPoint((-1, -1, -1), (0, 0, 1)),
-                new ModelPoint((-1, -1, 1), (0, 0, 1)),
-                new ModelPoint((-1, 1, 1), (0, 0, 1)),
-                new ModelPoint((-1, 1, -1), (0, 0, 1)),
-                //upper
-                new ModelPoint(( 1, 1, 1), (1, 1, 0)),
-                new ModelPoint((-1, 1, 1), (1, 1, 0)),
-                new ModelPoint((-1, 1, -1), (1, 1, 0)),
-                new ModelPoint((1, 1, -1), (1, 1, 0)),
-                //bottom
-                new ModelPoint((-1, -1, -1), (1, 0, 1)),
-                new ModelPoint((1, -1, -1), (1, 0, 1)),
-                new ModelPoint(( 1, -1, 1), (1, 0, 1)),
-                new ModelPoint((-1, -1, 1), (1, 0, 1)),
-            }, 
-            new uint[] 
-            {
-                0,  1,  2,  0,  2,  3,   //front
-                6,  5,  4,  7,  6,  4,   //right
-                10, 9,  8,  11, 10, 8,   //back
-                12, 13, 14, 12, 14, 15,  //left
-                18, 17, 16, 19, 18, 16,  //upper
-                20, 21, 22, 20, 22, 23   //bottom
-            }, ShapeMode.LightBarrier);
+                points[i++] = new ModelPoint(vertex * 2, (1f, .82f, .09f));
+            }
+            return new Model(points, chamferBoxReader.Indices, ShapeMode.LightBarrier);
         }
 
         public static Model CreateHeavyBarrier()
         {
-            return new Model(new ModelPoint[]
+            ModelPoint[] points = new ModelPoint[chamferBoxReader.Vertices.Length];
+            int i = 0;
+            foreach (Vector3 vertex in chamferBoxReader.Vertices)
             {
-                //front
-                new ModelPoint((-1, -1 , 1), (0, 0, 0)),
-                new ModelPoint((1, -1, 1), (0, 0, 0)),
-                new ModelPoint((1, 1, 1), (0, 0, 0)),
-                new ModelPoint((-1, 1, 1), (0, 0, 0)),
-                //right
-                new ModelPoint((1, 1, 1), (0, 0, 0)),
-                new ModelPoint((1, 1, -1), (0, 0, 0)),
-                new ModelPoint((1, -1, -1), (0, 0, 0)),
-                new ModelPoint((1, -1, 1), (0, 0, 0)),
-                //back
-                new ModelPoint((-1, -1, -1), (0, 0, 0)),
-                new ModelPoint((1, -1, -1), (0, 0, 0)),
-                new ModelPoint(( 1, 1, -1), (0, 0, 0)),
-                new ModelPoint((-1, 1, -1), (0, 0, 0)),
-                //left
-                new ModelPoint((-1, -1, -1), (0, 0, 0)),
-                new ModelPoint((-1, -1, 1), (0, 0, 0)),
-                new ModelPoint((-1, 1, 1), (0, 0, 0)),
-                new ModelPoint((-1, 1, -1), (0, 0, 0)),
-                //upper
-                new ModelPoint(( 1, 1, 1), (0, 0, 0)),
-                new ModelPoint((-1, 1, 1), (0, 0, 0)),
-                new ModelPoint((-1, 1, -1), (0, 0, 0)),
-                new ModelPoint((1, 1, -1), (0, 0, 0)),
-                //bottom
-                new ModelPoint((-1, -1, -1), (0, 0, 0)),
-                new ModelPoint((1, -1, -1), (0, 0, 0)),
-                new ModelPoint(( 1, -1, 1), (0, 0, 0)),
-                new ModelPoint((-1, -1, 1), (0, 0, 0)),
-            },
-            new uint[]
-            {
-                0,  1,  2,  0,  2,  3,   //front
-                6,  5,  4,  7,  6,  4,   //right
-                10, 9,  8,  11, 10, 8,   //back
-                12, 13, 14, 12, 14, 15,  //left
-                18, 17, 16, 19, 18, 16,  //upper
-                20, 21, 22, 20, 22, 23   //bottom
-            }, ShapeMode.HeavyBarrier);
+                points[i++] = new ModelPoint(vertex * 2, (.4f, .4f, .4f));
+            }
+            return new Model(points, chamferBoxReader.Indices, ShapeMode.HeavyBarrier);
         }
 
         public static Model CreatePlayer()
         {
-            return new Model(new ModelPoint[]
+            ModelPoint[] points = new ModelPoint[sphereReader.Vertices.Length];
+            int i = 0;
+            foreach (Vector3 vertex in sphereReader.Vertices)
             {
-                //front
-                new ModelPoint((-0.9f, -0.9f , 0.9f), (0, 1, 0)),
-                new ModelPoint((0.9f, -0.9f, 0.9f), (0, 1, 0)),
-                new ModelPoint((0.9f, 0.9f, 0.9f), (0, 1, 0)),
-                new ModelPoint((-0.9f, 0.9f, 0.9f), (0, 1, 0)),
-                //right
-                new ModelPoint((0.9f, 0.9f, 0.9f), (0, 0, 1)),
-                new ModelPoint((0.9f, 0.9f, -0.9f), (0, 0, 1)),
-                new ModelPoint((0.9f, -0.9f, -0.9f), (0, 0, 1)),
-                new ModelPoint((0.9f, -0.9f, 0.9f), (0, 0, 1)),
-                //back
-                new ModelPoint((-0.9f, -0.9f, -0.9f), (1, 1, 1)),
-                new ModelPoint((0.9f, -0.9f, -0.9f), (1, 1, 1)),
-                new ModelPoint(( 0.9f, 0.9f, -0.9f), (1, 1, 1)),
-                new ModelPoint((-0.9f, 0.9f, -0.9f), (1, 1, 1)),
-                //left
-                new ModelPoint((-0.9f, -0.9f, -0.9f), (1, 0, 0)),
-                new ModelPoint((-0.9f, -0.9f, 0.9f), (1, 0, 0)),
-                new ModelPoint((-0.9f, 0.9f, 0.9f), (1, 0, 0)),
-                new ModelPoint((-0.9f, 0.9f, -0.9f), (1, 0, 0)),
-                //upper
-                new ModelPoint(( 0.9f, 0.9f, 0.9f), (1, 0, 1)),
-                new ModelPoint((-0.9f, 0.9f, 0.9f), (1, 0, 1)),
-                new ModelPoint((-0.9f, 0.9f, -0.9f), (1, 0, 1)),
-                new ModelPoint((0.9f, 0.9f, -0.9f), (1, 0, 1)),
-                //bottom
-                new ModelPoint((-0.9f, -0.9f, -0.9f), (1, 1, 1)),
-                new ModelPoint((0.9f, -0.9f, -0.9f), (1, 1, 1)),
-                new ModelPoint(( 0.9f, -0.9f, 0.9f), (1, 1, 1)),
-                new ModelPoint((-0.9f, -0.9f, 0.9f), (1, 1, 1)),
-            },
-            new uint[]
-            {
-                0,  1,  2,  0,  2,  3,   //front
-                6,  5,  4,  7,  6,  4,   //right
-                10, 9,  8,  11, 10, 8,   //back
-                12, 13, 14, 12, 14, 15,  //left
-                18, 17, 16, 19, 18, 16,  //upper
-                20, 21, 22, 20, 22, 23   //bottom
-            }, ShapeMode.Player);
+                points[i++] = new ModelPoint(vertex * 2, (.2f, .8f, 1f));
+            }
+            return new Model(points, sphereReader.Indices, ShapeMode.Player);
         }
 
         public static Model CreateWall()
         {
-            return new Model(new ModelPoint[]
+            ModelPoint[] points = new ModelPoint[boxReader.Vertices.Length];
+            int i = 0;
+            foreach (Vector3 vertex in boxReader.Vertices)
             {
-                //front
-                new ModelPoint((-1, -1 , 1), (1, 1, 1)),
-                new ModelPoint((1, -1, 1), (1, 1, 1)),
-                new ModelPoint((1, 3, 1), (1, 1, 1)),
-                new ModelPoint((-1, 3, 1), (1, 1, 1)),
-                //right
-                new ModelPoint((1, 3, 1), (1, 0, 0)),
-                new ModelPoint((1, 3, -1), (1, 0, 0)),
-                new ModelPoint((1, -1, -1), (1, 0, 0)),
-                new ModelPoint((1, -1, 1), (1, 0, 0)),
-                //back
-                new ModelPoint((-1, -1, -1), (0, 1, 0)),
-                new ModelPoint((1, -1, -1), (0, 1, 0)),
-                new ModelPoint(( 1, 3, -1), (0, 1, 0)),
-                new ModelPoint((-1, 3, -1), (0, 1, 0)),
-                //left
-                new ModelPoint((-1, -1, -1), (0, 0, 1)),
-                new ModelPoint((-1, -1, 1), (0, 0, 1)),
-                new ModelPoint((-1, 3, 1), (0, 0, 1)),
-                new ModelPoint((-1, 3, -1), (0, 0, 1)),
-                //upper
-                new ModelPoint(( 1, 3, 1), (1, 1, 0)),
-                new ModelPoint((-1, 3, 1), (1, 1, 0)),
-                new ModelPoint((-1, 3, -1), (1, 1, 0)),
-                new ModelPoint((1, 3, -1), (1, 1, 0)),
-                //bottom
-                new ModelPoint((-1, -1, -1), (1, 0, 1)),
-                new ModelPoint((1, -1, -1), (1, 0, 1)),
-                new ModelPoint(( 1, -1, 1), (1, 0, 1)),
-                new ModelPoint((-1, -1, 1), (1, 0, 1)),
-            }, 
-            new uint[]
-            {
-                0,  1,  2,  0,  2,  3,   //front
-                6,  5,  4,  7,  6,  4,   //right
-                10, 9,  8,  11, 10, 8,   //back
-                12, 13, 14, 12, 14, 15,  //left
-                18, 17, 16, 19, 18, 16,  //upper
-                20, 21, 22, 20, 22, 23   //bottom
-            }, ShapeMode.Wall);
+                points[i++] = new ModelPoint(vertex * 2, (.2f, .2f, .2f));
+            }
+            return new Model(points, boxReader.Indices, ShapeMode.Wall);
         }
 
         public static Model CreateFlat(int width, int height)
         {
             float y = -1f;
             List<ModelPoint> points = new List<ModelPoint>();
-            List<uint> indices = new List<uint>();
-            uint startIndex = 0;
+            List<ushort> indices = new List<ushort>();
+            ushort startIndex = 0;
             for (int x = -width / 2 * 2; x <= width; x += 2)
             {
                 for (int z = -height / 2 * 2; z <= height; z += 2)
@@ -274,7 +144,7 @@ namespace Client
                     points.Add(new ModelPoint((x - 1, y, z + 1), (0.75f, 0.75f, 0.75f)));
                     points.Add(new ModelPoint((x + 1, y, z - 1), (0.75f, 0.75f, 0.75f)));
                     points.Add(new ModelPoint((x + 1, y, z + 1), (0.75f, 0.75f, 0.75f)));
-                    indices.AddRange(new uint[6] { startIndex, startIndex + 1, startIndex + 2, startIndex + 2, startIndex + 1, startIndex + 3 });
+                    indices.AddRange(new ushort[6] { startIndex, (ushort)(startIndex + 1), (ushort)(startIndex + 2), (ushort)(startIndex + 2), (ushort)(startIndex + 1), (ushort)(startIndex + 3) });
                     startIndex += 4;
                 }
             }
@@ -293,13 +163,13 @@ namespace Client
             switch (Model.OutputMode)
             {
                 case OutputMode.Triangles:
-                    GL.DrawElements(PrimitiveType.Triangles, indices.Length, DrawElementsType.UnsignedInt, 0);
+                    GL.DrawElements(PrimitiveType.Triangles, indices.Length, DrawElementsType.UnsignedShort, 0);
                     break;
                 case OutputMode.Lines:
-                    GL.DrawElements(PrimitiveType.Lines, indices.Length, DrawElementsType.UnsignedInt, 0);
+                    GL.DrawElements(PrimitiveType.Lines, indices.Length, DrawElementsType.UnsignedShort, 0);
                     break;
                 default:
-                    GL.DrawElements(PrimitiveType.Triangles, indices.Length, DrawElementsType.UnsignedInt, 0);
+                    GL.DrawElements(PrimitiveType.Triangles, indices.Length, DrawElementsType.UnsignedShort, 0);
                     break;
             }
             GL.DisableClientState(ArrayCap.VertexArray);
@@ -315,7 +185,7 @@ namespace Client
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, IdIndexBuffer);
             GL.EnableVertexAttribArray(0);
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, ModelPoint.Size(), 0);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(indices.Length * sizeof(uint)), indices, BufferUsageHint.StaticDraw);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(indices.Length * sizeof(ushort)), indices, BufferUsageHint.StaticDraw);
         }
     }
 }

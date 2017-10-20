@@ -10,15 +10,17 @@
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
-# Build results
-[Dd]ebug/
+# Build 
+[Dd]ebug/*
+![Dd]ebug/map_default.txt
+![Dd]ebug/*.3DS
 [Dd]ebugPublic/
 [Rr]elease/
 [Rr]eleases/
 x64/
 x86/
 bld/
-[Bb]in/
+# [Bb]in/
 [Oo]bj/
 [Ll]og/
 
@@ -262,3 +264,17 @@ __pycache__/
 
 # Links
 *.lnk
+/Client/bin/Debug/OpenTK.xml
+/Client/bin/Debug/OpenTK.GLControl.xml
+/Client/bin/Debug/OpenTK.GLControl.dll
+/Client/bin/Debug/OpenTK.dll
+/Client/bin/Debug/Newtonsoft.Json.xml
+/Client/bin/Debug/Newtonsoft.Json.dll
+/Client/bin/Debug/log.txt
+/Client/bin/Debug/Client.exe.config
+/Client/bin/Debug/Client.exe
+/Server/bin/Debug/Server.exe.config
+/Server/bin/Debug/Server.exe
+/Server/bin/Debug/Newtonsoft.Json.xml
+/Server/bin/Debug/Newtonsoft.Json.dll
+/Server/bin/Debug/map_latest.txt
