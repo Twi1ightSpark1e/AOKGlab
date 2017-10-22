@@ -14,6 +14,7 @@ namespace Client
         public string FileName { get; private set; }
         public Vector3[] Vertices { get; private set; }
         public ushort[] Indices { get; private set; }
+        public Vector3[] Normals { get; private set; }
         private BinaryReader fileReader;
         private Dictionary<ushort, Action> dontSkip = new Dictionary<ushort, Action>();
 
@@ -73,6 +74,23 @@ namespace Client
                     dontSkip[chunkId]?.Invoke();
                 else fileReader.ReadBytes((int)chunkLength - 6);
             }
+            fileReader.Close();
+            // Вычисление нормалей, избавление от индексов
+            Normals = new Vector3[Indices.Length];
+            //Vector3[] newVertices = new Vector3[Indices.Length];
+            for (int i = 0; i < Indices.Length; i += 3)
+            {
+                Vector3 v1 = Vertices[Indices[i]];
+                Vector3 v2 = Vertices[Indices[i + 1]];
+                Vector3 v3 = Vertices[Indices[i + 2]];
+
+                Normals[Indices[i]] += Vector3.Cross(v2 - v1, v3 - v1);
+                Normals[Indices[i + 1]] += Vector3.Cross(v2 - v1, v3 - v1);
+                Normals[Indices[i + 2]] += Vector3.Cross(v2 - v1, v3 - v1);
+            }
+            for (int i = 0; i < Indices.Length; i++)
+                Normals[i].Normalize();
+            //Vertices = newVertices;
         }
     }
 }

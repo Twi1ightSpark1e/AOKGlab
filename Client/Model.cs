@@ -22,23 +22,25 @@ namespace Client
 
     struct ModelPoint
     {
-        Vector3 coordinates, colors;
+        Vector3 coordinates, colors, normals;
 
-        public ModelPoint((float x, float y, float z) coordinates, (float r, float g, float b) colors)
+        public ModelPoint((float x, float y, float z) coordinates, (float r, float g, float b) colors, (float x, float y, float z) normals)
         {
             this.coordinates = new Vector3(coordinates.x, coordinates.y, coordinates.z);
             this.colors = new Vector3(colors.r, colors.g, colors.b);
+            this.normals = new Vector3(normals.x, normals.y, normals.z);
         }
 
-        public ModelPoint(Vector3 coordinates, (float r, float g, float b) colors)
+        public ModelPoint(Vector3 coordinates, (float r, float g, float b) colors, Vector3 normals)
         {
             this.coordinates = coordinates;
             this.colors = new Vector3(colors.r, colors.g, colors.b);
+            this.normals = normals;
         }
 
         public static int Size()
         {
-            return Vector3.SizeInBytes * 2;
+            return Vector3.SizeInBytes * 3;
         }
 
         public static IntPtr CoordinatesOffset()
@@ -49,6 +51,11 @@ namespace Client
         public static IntPtr ColorsOffset()
         {
             return Marshal.OffsetOf<ModelPoint>("colors");
+        }
+
+        public static IntPtr NormalsOffset()
+        {
+            return Marshal.OffsetOf<ModelPoint>("normals");
         }
     }
 
@@ -92,7 +99,8 @@ namespace Client
             int i = 0;
             foreach (Vector3 vertex in chamferBoxReader.Vertices)
             {
-                points[i++] = new ModelPoint(vertex * 2, (1f, .82f, .09f));
+                points[i] = new ModelPoint(vertex * 2, (1f, .82f, .09f), chamferBoxReader.Normals[i]);
+                i++;
             }
             return new Model(points, chamferBoxReader.Indices, ShapeMode.LightBarrier);
         }
@@ -103,7 +111,8 @@ namespace Client
             int i = 0;
             foreach (Vector3 vertex in chamferBoxReader.Vertices)
             {
-                points[i++] = new ModelPoint(vertex * 2, (.4f, .4f, .4f));
+                points[i] = new ModelPoint(vertex * 2, (.4f, .4f, .4f), chamferBoxReader.Normals[i]);
+                i++;
             }
             return new Model(points, chamferBoxReader.Indices, ShapeMode.HeavyBarrier);
         }
@@ -114,7 +123,8 @@ namespace Client
             int i = 0;
             foreach (Vector3 vertex in sphereReader.Vertices)
             {
-                points[i++] = new ModelPoint(vertex * 2, (.2f, .8f, 1f));
+                points[i] = new ModelPoint(vertex * 2, (.2f, .8f, 1f), sphereReader.Normals[i]);
+                i++;
             }
             return new Model(points, sphereReader.Indices, ShapeMode.Player);
         }
@@ -125,7 +135,8 @@ namespace Client
             int i = 0;
             foreach (Vector3 vertex in boxReader.Vertices)
             {
-                points[i++] = new ModelPoint(vertex * 2, (.2f, .2f, .2f));
+                points[i] = new ModelPoint(vertex * 2, (.2f, .2f, .2f), boxReader.Normals[i]);
+                i++;
             }
             return new Model(points, boxReader.Indices, ShapeMode.Wall);
         }
@@ -140,10 +151,10 @@ namespace Client
             {
                 for (int z = -height / 2 * 2; z <= height; z += 2)
                 {
-                    points.Add(new ModelPoint((x - 1, y, z - 1), (0.75f, 0.75f, 0.75f)));
-                    points.Add(new ModelPoint((x - 1, y, z + 1), (0.75f, 0.75f, 0.75f)));
-                    points.Add(new ModelPoint((x + 1, y, z - 1), (0.75f, 0.75f, 0.75f)));
-                    points.Add(new ModelPoint((x + 1, y, z + 1), (0.75f, 0.75f, 0.75f)));
+                    points.Add(new ModelPoint((x - 1, y, z - 1), (0.75f, 0.75f, 0.75f), (0, 1, 0)));
+                    points.Add(new ModelPoint((x - 1, y, z + 1), (0.75f, 0.75f, 0.75f), (0, 1, 0)));
+                    points.Add(new ModelPoint((x + 1, y, z - 1), (0.75f, 0.75f, 0.75f), (0, 1, 0)));
+                    points.Add(new ModelPoint((x + 1, y, z + 1), (0.75f, 0.75f, 0.75f), (0, 1, 0)));
                     indices.AddRange(new ushort[6] { startIndex, (ushort)(startIndex + 1), (ushort)(startIndex + 2), (ushort)(startIndex + 2), (ushort)(startIndex + 1), (ushort)(startIndex + 3) });
                     startIndex += 4;
                 }
@@ -155,11 +166,13 @@ namespace Client
         {
             GL.EnableClientState(ArrayCap.VertexArray);
             GL.EnableClientState(ArrayCap.ColorArray);
+            GL.EnableClientState(ArrayCap.NormalArray);
             GL.BindBuffer(BufferTarget.ArrayBuffer, IdVertexBuffer);
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, IdIndexBuffer);
             GL.EnableVertexAttribArray(0);
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, ModelPoint.Size(), ModelPoint.CoordinatesOffset());
             GL.ColorPointer(3, ColorPointerType.Float, ModelPoint.Size(), ModelPoint.ColorsOffset());
+            GL.NormalPointer(NormalPointerType.Float, ModelPoint.Size(), ModelPoint.NormalsOffset());
             switch (Model.OutputMode)
             {
                 case OutputMode.Triangles:
@@ -174,6 +187,7 @@ namespace Client
             }
             GL.DisableClientState(ArrayCap.VertexArray);
             GL.DisableClientState(ArrayCap.ColorArray);
+            GL.DisableClientState(ArrayCap.NormalArray);
         }
 
         private void InitializeVBO()
