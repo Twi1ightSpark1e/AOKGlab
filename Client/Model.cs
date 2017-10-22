@@ -22,25 +22,23 @@ namespace Client
 
     struct ModelPoint
     {
-        Vector3 coordinates, colors, normals;
+        Vector3 coordinates, normals;
 
         public ModelPoint((float x, float y, float z) coordinates, (float r, float g, float b) colors, (float x, float y, float z) normals)
         {
             this.coordinates = new Vector3(coordinates.x, coordinates.y, coordinates.z);
-            this.colors = new Vector3(colors.r, colors.g, colors.b);
             this.normals = new Vector3(normals.x, normals.y, normals.z);
         }
 
         public ModelPoint(Vector3 coordinates, (float r, float g, float b) colors, Vector3 normals)
         {
             this.coordinates = coordinates;
-            this.colors = new Vector3(colors.r, colors.g, colors.b);
             this.normals = normals;
         }
 
         public static int Size()
         {
-            return Vector3.SizeInBytes * 3;
+            return Vector3.SizeInBytes * 2;
         }
 
         public static IntPtr CoordinatesOffset()
@@ -171,7 +169,6 @@ namespace Client
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, IdIndexBuffer);
             GL.EnableVertexAttribArray(0);
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, ModelPoint.Size(), ModelPoint.CoordinatesOffset());
-            GL.ColorPointer(3, ColorPointerType.Float, ModelPoint.Size(), ModelPoint.ColorsOffset());
             GL.NormalPointer(NormalPointerType.Float, ModelPoint.Size(), ModelPoint.NormalsOffset());
             switch (Model.OutputMode)
             {

@@ -27,16 +27,16 @@ namespace Server
                 switch (value)
                 {
                     case SquareContent.Wall:
-                        ForeColor = Color.Red;
+                        ForeColor = Color.Black;
                         break;
                     case SquareContent.Player:
                         ForeColor = Color.Blue;
                         break;
                     case SquareContent.LightBarrier:
-                        ForeColor = Color.Yellow;
+                        ForeColor = Color.DarkGoldenrod;
                         break;
                     case SquareContent.HeavyBarrier:
-                        ForeColor = Color.Black;
+                        ForeColor = Color.Gray;
                         break;
                     case SquareContent.Empty:
                         ForeColor = Color.White;

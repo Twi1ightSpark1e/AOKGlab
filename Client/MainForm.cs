@@ -57,10 +57,11 @@ namespace Client
         private static List<GraphicObject> graphicObjects;
         internal static List<GraphicObject> Scene => graphicObjects;
 
+        private static List<Material> materials;
         private static List<Model> models;
         private Model playerModel;
         private int fieldRowsCount, fieldColumnsCount;
-
+        private Light light;
         private static Camera camera;
         private static Stopwatch stopwatch;
         private static bool isCullingFaces;
@@ -169,6 +170,7 @@ namespace Client
                 //Настройки для просмотра
                 //Настройка позиции "глаз"
                 camera.SetCamera();
+                light.Apply();
                 //Отображаем все элементы
                 for (int i = 0; i < graphicObjects.Count; i++)
                     graphicObjects[i].Show();
@@ -202,7 +204,7 @@ namespace Client
                         var coordinates = msg.Remove(0, 10).Split('(', ')').ToList().Where((str) => str != string.Empty);
                         string[] xz = coordinates.ElementAt(0).Split(';');
                         players.Add((int.Parse(xz[0]), int.Parse(xz[1])));
-                        graphicObjects.Add(new GraphicObject(playerModel, (int.Parse(xz[0]), int.Parse(xz[1])), (fieldRowsCount, fieldColumnsCount), 0));
+                        graphicObjects.Add(new GraphicObject(playerModel, materials[2], (int.Parse(xz[0]), int.Parse(xz[1])), (fieldRowsCount, fieldColumnsCount), 0));
                     }
                     else if (msg.StartsWith("delplayer"))
                     {
@@ -265,23 +267,23 @@ namespace Client
                         if (lightBarrierModel == null || heavyBarrierModel == null || playerModel == null || wallModel == null || flatModel == null)
                             throw new Exception("Одна из ключевых моделей не определена");
 
-                        graphicObjects.Add(new GraphicObject(flatModel, (0, 0), (0, 0), 0)); //плоская модель
+                        graphicObjects.Add(new GraphicObject(flatModel, materials[4], (0, 0), (0, 0), 0)); //плоская модель
                         foreach (MapUnit unit in units)
                         {
                             switch ((ShapeMode)unit.value)
                             {
                                 case ShapeMode.LightBarrier:
-                                    graphicObjects.Add(new GraphicObject(lightBarrierModel, (unit.x, unit.z), (fieldRowsCount, fieldColumnsCount), 0));
+                                    graphicObjects.Add(new GraphicObject(lightBarrierModel, materials[0], (unit.x, unit.z), (fieldRowsCount, fieldColumnsCount), 0));
                                     break;
                                 case ShapeMode.HeavyBarrier:
-                                    graphicObjects.Add(new GraphicObject(heavyBarrierModel, (unit.x, unit.z), (fieldRowsCount, fieldColumnsCount), 0));
+                                    graphicObjects.Add(new GraphicObject(heavyBarrierModel, materials[1], (unit.x, unit.z), (fieldRowsCount, fieldColumnsCount), 0));
                                     break;
                                 case ShapeMode.Wall:
-                                    graphicObjects.Add(new GraphicObject(wallModel, (unit.x, unit.z), (fieldRowsCount, fieldColumnsCount), 0));
+                                    graphicObjects.Add(new GraphicObject(wallModel, materials[3], (unit.x, unit.z), (fieldRowsCount, fieldColumnsCount), 0));
                                     break;
                             }
                         }
-                        GraphicObject playerObject = new GraphicObject(playerModel, players[0], (fieldRowsCount, fieldColumnsCount), 0);
+                        GraphicObject playerObject = new GraphicObject(playerModel, materials[2], players[0], (fieldRowsCount, fieldColumnsCount), 0);
                         playerObject.OnSimulationFinished += () =>
                         {
                             waitUntilMoveReceive = false;
@@ -290,7 +292,7 @@ namespace Client
                         playerObjects.Add(playerObject);
                         for (int i = 1; i < players.Count; i++)
                         {
-                            var enemyObject = new GraphicObject(playerModel, players.ElementAt(i), (fieldRowsCount, fieldColumnsCount), 0);
+                            var enemyObject = new GraphicObject(playerModel, materials[2], players.ElementAt(i), (fieldRowsCount, fieldColumnsCount), 0);
                             graphicObjects.Insert(0, enemyObject);
                             playerObjects.Add(enemyObject);
                         }
@@ -395,6 +397,7 @@ namespace Client
         private void glControl1_Load(object sender, EventArgs e)
         {
             GL.Enable(EnableCap.DepthTest);
+            GL.Enable(EnableCap.Lighting);
             ChangeCullingFaces(true);
             Model.OutputMode = OutputMode.Triangles;
 
@@ -404,6 +407,24 @@ namespace Client
                 Model.CreateHeavyBarrier(),
                 Model.CreatePlayer(),
                 Model.CreateWall()
+            };
+
+            materials = new List<Material>()
+            {
+                Material.CreateLightBarrier(),
+                Material.CreateHeavyBarrier(),
+                Material.CreatePlayer(),
+                Material.CreateWall(),
+                Material.CreateFlat()
+            };
+
+            light = new Light()
+            {
+                Position = new Vector3(10, 10, 10),
+                Ambient = new Vector3(1, 1, 1),
+                Diffuse = new Vector3(.7f, .7f, .7f),
+                Specular = new Vector3(.5f, .5f, .5f),
+                LightName = LightName.Light0
             };
         }
 
