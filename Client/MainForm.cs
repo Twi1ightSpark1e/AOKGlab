@@ -146,7 +146,7 @@ namespace Client
 
         private void glControl1_Resize(object sender, EventArgs e)
         {
-            GL.Viewport(0, 0, glControl1.Width, glControl1.Height);
+            GL.Viewport(glControl1.Location.X, glControl1.Location.Y, glControl1.Width, glControl1.Height);
             GL.MatrixMode(MatrixMode.Projection);
             GL.LoadIdentity();
             float aspect = glControl1.Width / glControl1.Height;
@@ -204,7 +204,9 @@ namespace Client
                         var coordinates = msg.Remove(0, 10).Split('(', ')').ToList().Where((str) => str != string.Empty);
                         string[] xz = coordinates.ElementAt(0).Split(';');
                         players.Add((int.Parse(xz[0]), int.Parse(xz[1])));
-                        graphicObjects.Add(new GraphicObject(playerModel, materials[2], (int.Parse(xz[0]), int.Parse(xz[1])), (fieldRowsCount, fieldColumnsCount), 0));
+                        var enemyObject = new GraphicObject(playerModel, materials[2], (int.Parse(xz[0]), int.Parse(xz[1])), (fieldRowsCount, fieldColumnsCount), 0);
+                        graphicObjects.Add(enemyObject);
+                        playerObjects.Add(enemyObject);
                     }
                     else if (msg.StartsWith("delplayer"))
                     {
@@ -225,6 +227,12 @@ namespace Client
                                     if (graphicObjects[i].Position.Equals(coords))
                                     {
                                         graphicObjects.RemoveAt(i);
+                                        break;
+                                    }
+                                for (int i = 0; i < playerObjects.Count; i++)
+                                    if (playerObjects[i].Position.Equals(coords))
+                                    {
+                                        playerObjects.RemoveAt(i);
                                         break;
                                     }
                                 break;
@@ -317,11 +325,11 @@ namespace Client
                         splitted.RemoveAt(0); //нулевой элемент - координаты передвигающегося кубика; первый элемент - его направление движения
                         string[] xz = splitted[0].Split(';');
                         MoveDirection direction = (MoveDirection)Enum.Parse(typeof(MoveDirection), splitted[1]);
-                        foreach (GraphicObject graphicObject in graphicObjects)
+                        foreach (GraphicObject playerObject in playerObjects)
                         {
-                            if (graphicObject.Position.Equals((int.Parse(xz[0]), int.Parse(xz[1]))))
+                            if (playerObject.Position.Equals((int.Parse(xz[0]), int.Parse(xz[1]))))
                             {
-                                graphicObject.Move(direction);
+                                playerObject.Move(direction);
                                 //waitUntilMoveReceive = false;
                                 break;
                             }                            
@@ -381,7 +389,6 @@ namespace Client
                     MoveDirection moveDirection = (MoveDirection)move;
                     waitUntilMoveReceive = true;
                     ClientMode.Client.SendMessage($"move{moveDirection}");
-                    Debug.WriteLine("Move sent");
                 }
             }
             for (int i = 0; i < playerObjects.Count; i++)
