@@ -33,7 +33,7 @@ namespace Server
                         ForeColor = Color.Blue;
                         break;
                     case SquareContent.LightBarrier:
-                        ForeColor = Color.DarkGoldenrod;
+                        ForeColor = Color.Yellow;
                         break;
                     case SquareContent.HeavyBarrier:
                         ForeColor = Color.Gray;

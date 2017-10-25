@@ -37,18 +37,22 @@ namespace Client
             {
                 connected = value;
                 LastInstance.addressTextBox.Enabled = LastInstance.connectButton.Enabled = !connected;
-                LastInstance.changeModelButton.Enabled = LastInstance.cullFaceModeButton.Enabled = connected;
+                LastInstance.changeModelButton.Enabled = LastInstance.cullFaceModeButton.Enabled = LastInstance.lightingButton.Enabled = connected;
                 if (value)
                 {
                     Application.Idle += LastInstance.mainForm_onIdle;
                     if (stopwatch == null)
                         stopwatch = Stopwatch.StartNew();
                     else stopwatch.Restart();
+                    if (fpsCountHelper == null)
+                        fpsCountHelper = Stopwatch.StartNew();
+                    else fpsCountHelper.Restart();
                 }
                 else
                 {
                     Application.Idle -= LastInstance.mainForm_onIdle;
                     stopwatch?.Stop();
+                    fpsCountHelper?.Stop();
                 }
                 LastInstance.glControl1.Invalidate();
             }
@@ -63,28 +67,11 @@ namespace Client
         private int fieldRowsCount, fieldColumnsCount;
         private Light light;
         private static Camera camera;
-        private static Stopwatch stopwatch;
+        private static Stopwatch stopwatch, fpsCountHelper;
         private static bool isCullingFaces;
         private bool waitUntilMoveReceive;
-
-        private static int lastTick;
-        private static string lastFrameRate;
-        private static int frameRate;
-
-        public static string CalculateFrameRate()
-        {
-            if (Environment.TickCount - lastTick >= 1000)
-            {
-                string outputMode = Model.OutputMode == OutputMode.Lines ? "Вывод линий" : "Вывод треугольников";
-                string cullingMode = isCullingFaces ? "Отсечение граней" : "Нет отсечения граней";
-                lastFrameRate = $"Лабораторная работа №5, клиент; FPS: {frameRate.ToString()}; {outputMode}; {cullingMode}";
-                frameRate = 0;
-                lastTick = Environment.TickCount;
-            }
-            frameRate++;
-            return lastFrameRate;
-        }
-
+        private static float frameRate;
+        
         private List<(int x, int z)> players = new List<(int x, int z)>();
         private List<GraphicObject> playerObjects = new List<GraphicObject>();
         private static MoveDirection movePositiveX() => MoveDirection.Right;
@@ -332,7 +319,7 @@ namespace Client
                                 playerObject.Move(direction);
                                 //waitUntilMoveReceive = false;
                                 break;
-                            }                            
+                            }
                         }
                     }
                     else if (msg.StartsWith("err"))
@@ -364,15 +351,6 @@ namespace Client
                 dirs |= state.IsKeyDown(Key.Right) ? Directions.Right : Directions.None;
                 dirs |= (state.IsKeyDown(Key.Plus) || state.IsKeyDown(Key.KeypadPlus)) ? Directions.Forward : Directions.None;
                 dirs |= (state.IsKeyDown(Key.Minus) || state.IsKeyDown(Key.KeypadMinus)) ? Directions.Backward : Directions.None;
-                label2.Text = "UP: " + state.IsKeyDown(Key.Up).ToString();
-                label3.Text = "DOWN: " + state.IsKeyDown(Key.Down).ToString();
-                label4.Text = "LEFT: " + state.IsKeyDown(Key.Left).ToString();
-                label5.Text = "RIGHT: " + state.IsKeyDown(Key.Right).ToString();
-                label6.Text = "PLUS: " + (state.IsKeyDown(Key.Plus) || state.IsKeyDown(Key.KeypadPlus)).ToString();
-                label7.Text = "MINUS: " + (state.IsKeyDown(Key.Minus) || state.IsKeyDown(Key.KeypadMinus)).ToString();
-                label8.Text = "radianX: " + camera.RadianX;
-                label9.Text = "radianY: "+ camera.RadianY;
-                label10.Text = "radius: " + camera.Radius;
                 camera.CurrentDirection = dirs;
                 camera.Simulate(millisecondsElapsed / 1000);
                 int move = 0;
@@ -395,10 +373,12 @@ namespace Client
                 if (playerObjects[i].IsMoving)
                     playerObjects[i].Simulate(millisecondsElapsed / 1000);
             glControl1.Invalidate();
-            Text = CalculateFrameRate();
-            label10.Text = waitUntilMoveReceive.ToString();
-
-            //log.Add($"UP: {state.IsKeyDown(Key.Up).ToString():6} DOWN: {state.IsKeyDown(Key.Down).ToString():6} LEFT: {state.IsKeyDown(Key.Left).ToString():6} RIGHT: {state.IsKeyDown(Key.Right).ToString():6} PLUS: {(state.IsKeyDown(Key.Plus) || state.IsKeyDown(Key.KeypadPlus)).ToString():6} MINUS: {(state.IsKeyDown(Key.Minus) || state.IsKeyDown(Key.KeypadMinus)).ToString():6} X: {camera.Eye.X} Y: {camera.Eye.Y} Z: {camera.Eye.Z}");
+            if (fpsCountHelper.ElapsedMilliseconds >= 1000)
+            {
+                frameRate = 1 / (millisecondsElapsed / 1000);
+                fpsCountHelper.Restart();
+                SetText();
+            }
         }
 
         private void glControl1_Load(object sender, EventArgs e)
@@ -433,6 +413,7 @@ namespace Client
                 Specular = new Vector3(.5f, .5f, .5f),
                 LightName = LightName.Light0
             };
+            Light.LightMode = LightMode.All;
         }
 
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
@@ -448,10 +429,7 @@ namespace Client
         {
             int temp = (int)Model.OutputMode;
             Model.OutputMode = (OutputMode)(++temp % Enum.GetNames(typeof(OutputMode)).Length);
-
-            string outputMode = Model.OutputMode == OutputMode.Lines ? "Вывод линий" : "Вывод треугольников";
-            string cullingMode = isCullingFaces ? "Отсечение граней" : "Нет отсечения граней";
-            Text = $"Лабораторная работа №5, клиент; FPS: {frameRate.ToString()}; {outputMode}; {cullingMode}";
+            SetText();
         }
 
         private void cullFaceModeButton_Click(object sender, EventArgs e)
@@ -472,10 +450,7 @@ namespace Client
                 GL.Disable(EnableCap.CullFace);
             }
             isCullingFaces = value;
-
-            string outputMode = Model.OutputMode == OutputMode.Lines ? "Вывод линий" : "Вывод треугольников";
-            string cullingMode = isCullingFaces ? "Отсечение граней" : "Нет отсечения граней";
-            Text = $"Лабораторная работа №5, клиент; FPS: {frameRate.ToString()}; {outputMode}; {cullingMode}";
+            SetText();
         }
 
         private void MainForm_Activated(object sender, EventArgs e)
@@ -483,9 +458,38 @@ namespace Client
             isActive = true;
         }
 
+        private void lightingButton_Click(object sender, EventArgs e)
+        {
+            Light.LightMode = (LightMode)((int)++Light.LightMode % (Enum.GetNames(typeof(LightMode)).Length));
+            SetText();
+        }
+
         private void MainForm_Deactivate(object sender, EventArgs e)
         {
             isActive = false;
+        }
+
+        private void SetText()
+        {
+            string outputMode = Model.OutputMode == OutputMode.Lines ? "Вывод линий" : "Вывод треугольников";
+            string cullingMode = isCullingFaces ? "Отсечение граней" : "Нет отсечения граней";
+            string lightMode = string.Empty;
+            switch (Light.LightMode)
+            {
+                case LightMode.All:
+                    lightMode = "Полное освещение";
+                    break;
+                case LightMode.OnlyAmbient:
+                    lightMode = "Общее освещение";
+                    break;
+                case LightMode.OnlyDiffuse:
+                    lightMode = "Диффузное освещение";
+                    break;
+                case LightMode.OnlySpecular:
+                    lightMode = "Спекулярное освещение";
+                    break;
+            }
+            Text = $"FPS: {frameRate.ToString("N2")}; {outputMode}; {cullingMode}; {lightMode}";
         }
     }
 }
