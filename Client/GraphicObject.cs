@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
+using System.Diagnostics;
 
 namespace Client
 {
@@ -29,8 +30,7 @@ namespace Client
         public float MoveProgress { get; private set; }
         public Model CurrentModel { get; set; }
         public Material CurrentMaterial { get; set; }
-        public float Speed => 2f;
-        private (int x, int z) destination;
+        public float Speed => 4f;
         private (int x, int z) position;
         public (int x, int z) Position
         {
@@ -117,64 +117,26 @@ namespace Client
         {
             if (!IsMoving)
             {
-                MoveProgress = 1;
+                MoveProgress = 0;
                 currentMoveDirection = direction;
                 switch (currentMoveDirection)
                 {
                     case MoveDirection.Up:
                     case MoveDirection.Down:
-                        destination = (position.x, position.z + Math.Sign((sbyte)currentMoveDirection));
+                        position = (position.x, position.z + Math.Sign((sbyte)currentMoveDirection));
                         break;
                     case MoveDirection.Left:
                     case MoveDirection.Right:
-                        destination = (position.x + Math.Sign((sbyte)currentMoveDirection), position.z);
+                        position = (position.x + Math.Sign((sbyte)currentMoveDirection), position.z);
                         break;
                 }
                 foreach (GraphicObject graphicObject in MainForm.Scene)
                 {
-                    if (graphicObject.Position.x == destination.x &&
-                        graphicObject.Position.z == destination.z &&
-                        graphicObject.CurrentModel.Shape != ShapeMode.Empty)
+                    if (graphicObject.Position.x == position.x &&
+                        graphicObject.Position.z == position.z &&
+                        graphicObject.CurrentModel.Shape != ShapeMode.Player)
                     {
                         nextObject = graphicObject;
-                        break;
-                    }
-                }
-            }
-        }
-
-        public void Simulate(float secondsElapsed)
-        {
-            if (currentMoveDirection != MoveDirection.None)
-            {
-                MoveProgress = MoveProgress - secondsElapsed * Speed;
-                Vector3 nextTranslation;
-
-                switch (currentMoveDirection)
-                {
-                    case MoveDirection.Up:
-                    case MoveDirection.Down:
-                        Translation = new Vector3((position.x - xLength / 2) * 2, 0, (position.z - zLength / 2) * 2 + Math.Sign((sbyte)currentMoveDirection) * (1 - MoveProgress) * 2f);
-                        nextTranslation = new Vector3(translation.X, 0, translation.Z + Math.Sign((sbyte)currentMoveDirection) * 2);
-                        break;
-                    case MoveDirection.Left:
-                    case MoveDirection.Right:
-                        Translation = new Vector3((position.x - xLength / 2) * 2 + Math.Sign((sbyte)currentMoveDirection) * (1 - MoveProgress) * 2f, 0, (position.z - zLength / 2) * 2);
-                        nextTranslation = new Vector3(translation.X + Math.Sign((sbyte)currentMoveDirection) * 2, 0, translation.Z);
-                        break;
-                    default:
-                        Translation = new Vector3(0, 0, 0);
-                        nextTranslation = new Vector3(0, 0, 0);
-                        break;
-                }
-                if (nextObject != null)
-                    nextObject.Translation = nextTranslation;
-                if (MoveProgress <= 0)
-                {
-                    MoveProgress = 0;
-                    Position = destination;
-                    if (nextObject != null)
-                    {
                         switch (currentMoveDirection)
                         {
                             case MoveDirection.Up:
@@ -186,8 +148,42 @@ namespace Client
                                 nextObject.Position = (position.x + Math.Sign((sbyte)currentMoveDirection), position.z);
                                 break;
                         }
-                        nextObject = null;
+                        break;
                     }
+                }
+            }
+        }
+
+        public void Simulate(float secondsElapsed)
+        {
+            if (currentMoveDirection != MoveDirection.None)
+            {
+                MoveProgress = MoveProgress + secondsElapsed * Speed;
+                Vector3 nextTranslation;
+
+                switch (currentMoveDirection)
+                {
+                    case MoveDirection.Up:
+                    case MoveDirection.Down:
+                        Translation = new Vector3((position.x - xLength / 2) * 2, 0, (position.z - zLength / 2) * 2 - Math.Sign((sbyte)currentMoveDirection) * (1 - MoveProgress) * 2f);
+                        nextTranslation = new Vector3(translation.X, 0, translation.Z + Math.Sign((sbyte)currentMoveDirection) * 2);
+                        break;
+                    case MoveDirection.Left:
+                    case MoveDirection.Right:
+                        Translation = new Vector3((position.x - xLength / 2) * 2 - Math.Sign((sbyte)currentMoveDirection) * (1 - MoveProgress) * 2f, 0, (position.z - zLength / 2) * 2);
+                        nextTranslation = new Vector3(translation.X + Math.Sign((sbyte)currentMoveDirection) * 2, 0, translation.Z);
+                        break;
+                    default:
+                        Translation = new Vector3(0, 0, 0);
+                        nextTranslation = new Vector3(0, 0, 0);
+                        break;
+                }
+                if (nextObject != null)
+                    nextObject.Translation = nextTranslation;
+                if (MoveProgress >= 1)
+                {
+                    MoveProgress = 1;
+                    nextObject = null;
                     currentMoveDirection = MoveDirection.None;
                     OnSimulationFinished?.Invoke();
                 }

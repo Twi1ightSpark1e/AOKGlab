@@ -35,6 +35,15 @@ namespace Client
             };
         }
 
+        public static Material CreateBomb()
+        {
+            return new Material()
+            {
+                Specular = new Vector3(.5f, .5f, .5f),
+                Shininess = 7f
+            };
+        }
+
         public static Material CreateLightBarrier()
         {
             return new Material()

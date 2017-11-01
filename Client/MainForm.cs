@@ -63,13 +63,13 @@ namespace Client
 
         private static List<Material> materials;
         private static List<Model> models;
-        private Model playerModel;
+        private Model playerModel, bombModel;
         private int fieldRowsCount, fieldColumnsCount;
         private Light light;
         private static Camera camera;
         private static Stopwatch stopwatch, fpsCountHelper;
         private static bool isCullingFaces;
-        private bool waitUntilMoveReceive;
+        private bool waitUntilResultReceive;
         private static float frameRate;
         
         private List<(int x, int z)> players = new List<(int x, int z)>();
@@ -251,6 +251,9 @@ namespace Client
                                 case ShapeMode.Player:
                                     playerModel = model;
                                     break;
+                                case ShapeMode.Bomb:
+                                    bombModel = model;
+                                    break;
                                 case ShapeMode.Wall:
                                     wallModel = model;
                                     break;
@@ -259,7 +262,7 @@ namespace Client
                                     break;
                             }
                         }
-                        if (lightBarrierModel == null || heavyBarrierModel == null || playerModel == null || wallModel == null || flatModel == null)
+                        if (lightBarrierModel == null || heavyBarrierModel == null || playerModel == null || bombModel == null || wallModel == null || flatModel == null)
                             throw new Exception("Одна из ключевых моделей не определена");
 
                         graphicObjects.Add(new GraphicObject(flatModel, materials[4], (0, 0), (0, 0), 0)); //плоская модель
@@ -281,7 +284,7 @@ namespace Client
                         GraphicObject playerObject = new GraphicObject(playerModel, materials[2], players[0], (fieldRowsCount, fieldColumnsCount), 0);
                         playerObject.OnSimulationFinished += () =>
                         {
-                            waitUntilMoveReceive = false;
+                            waitUntilResultReceive = false;
                         };
                         graphicObjects.Insert(0, playerObject);
                         playerObjects.Add(playerObject);
@@ -317,15 +320,43 @@ namespace Client
                             if (playerObject.Position.Equals((int.Parse(xz[0]), int.Parse(xz[1]))))
                             {
                                 playerObject.Move(direction);
-                                //waitUntilMoveReceive = false;
                                 break;
                             }
                         }
                     }
+                    else if (msg.StartsWith("bomb"))
+                    {
+                        List<string> splitted = msg.Split('(', ')').ToList();
+                        splitted.RemoveAt(0);
+                        string[] xz = splitted[0].Split(';');
+                        string[] radiusTime = splitted[1].Split(';');
+                        int bombTriggerRadius = int.Parse(radiusTime[0]);
+                        float bombTriggerTime = float.Parse(radiusTime[1]);
+                        GraphicObject bombObject = new GraphicObject(bombModel, materials[5], ((int.Parse(xz[0]), int.Parse(xz[1]))), (fieldColumnsCount, fieldRowsCount), 0);
+                        graphicObjects.Add(bombObject);
+                        Thread bombTriggerThread = new Thread((triggerTime) =>
+                        {
+                            Thread.Sleep((int)((float)triggerTime * 1000));
+                            for (int i = 0; i < graphicObjects.Count; i++)
+                            {
+                                if ((graphicObjects[i].Position.x >= bombObject.Position.x - bombTriggerRadius) &&
+                                    (graphicObjects[i].Position.x <= bombObject.Position.x + bombTriggerRadius) &&
+                                    (graphicObjects[i].Position.z >= bombObject.Position.z - bombTriggerRadius) &&
+                                    (graphicObjects[i].Position.z <= bombObject.Position.z + bombTriggerRadius) &&
+                                    (graphicObjects[i].CurrentModel.Shape == ShapeMode.LightBarrier))
+                                {
+                                    graphicObjects.RemoveAt(i--);
+                                }
+                            }
+                            graphicObjects.Remove(bombObject);
+                        });
+                        bombTriggerThread.Start(bombTriggerTime);
+                        waitUntilResultReceive = false;
+                    }
                     else if (msg.StartsWith("err"))
                     {
-                        if (msg.Remove(0, 3) == "move")
-                            waitUntilMoveReceive = false;
+                        if ((msg.Remove(0, 3) == "move") || ((msg.Remove(0, 3) == "bomb")))
+                            waitUntilResultReceive = false;
                         else if (msg.Remove(0, 3) == "place")
                         {
                             MessageBox.Show("Сервер не может обработать нового игрока");
@@ -362,11 +393,19 @@ namespace Client
                     move = (int)(keyHandlers['S']());
                 if (state.IsKeyDown(Key.D))
                     move = (int)(keyHandlers['D']());
-                if (move != 0 && !waitUntilMoveReceive)
+                if (!waitUntilResultReceive)
                 {
-                    MoveDirection moveDirection = (MoveDirection)move;
-                    waitUntilMoveReceive = true;
-                    ClientMode.Client.SendMessage($"move{moveDirection}");
+                    if (move != 0)
+                    {
+                        MoveDirection moveDirection = (MoveDirection)move;
+                        waitUntilResultReceive = true;
+                        ClientMode.Client.SendMessage($"move{moveDirection}");
+                    }
+                    else if (state.IsKeyDown(Key.Space))
+                    {
+                        waitUntilResultReceive = true;
+                        ClientMode.Client.SendMessage("bomb");
+                    }
                 }
             }
             for (int i = 0; i < playerObjects.Count; i++)
@@ -393,6 +432,7 @@ namespace Client
                 Model.CreateLightBarrier(),
                 Model.CreateHeavyBarrier(),
                 Model.CreatePlayer(),
+                Model.CreateBomb(),
                 Model.CreateWall()
             };
 
@@ -402,7 +442,8 @@ namespace Client
                 Material.CreateHeavyBarrier(),
                 Material.CreatePlayer(),
                 Material.CreateWall(),
-                Material.CreateFlat()
+                Material.CreateFlat(),
+                Material.CreateBomb()
             };
 
             light = new Light()

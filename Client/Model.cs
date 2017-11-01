@@ -12,7 +12,7 @@ namespace Client
 {
     enum ShapeMode
     {
-        Player = -1, Empty, LightBarrier, HeavyBarrier, Wall
+        Bomb = -2, Player, Empty, LightBarrier, HeavyBarrier, Wall
     }
 
     enum OutputMode
@@ -125,6 +125,18 @@ namespace Client
                 i++;
             }
             return new Model(points, sphereReader.Indices, ShapeMode.Player);
+        }
+
+        public static Model CreateBomb()
+        {
+            ModelPoint[] points = new ModelPoint[sphereReader.Vertices.Length];
+            int i = 0;
+            foreach (Vector3 vertex in sphereReader.Vertices)
+            {
+                points[i] = new ModelPoint(vertex * 2, (.2f, .8f, 1f), sphereReader.Normals[i]);
+                i++;
+            }
+            return new Model(points, sphereReader.Indices, ShapeMode.Bomb);
         }
 
         public static Model CreateWall()

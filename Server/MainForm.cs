@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -63,8 +64,14 @@ namespace Server
         }
 
         private List<(TcpClient client, MapUnit mapUnit)> players = new List<(TcpClient client, MapUnit mapUnit)>();
-        private static List<MapUnit> mapUnits = new List<MapUnit>();
+        private MapUnit bombMapUnit = new MapUnit()
+        {
+            value = -Square.EnumNegativesCount - 1
+        };
+        private static List<(MapUnit mapUnit, Square square)> mapUnits = new List<(MapUnit mapUnit, Square square)>();
         private static CameraCoordinates cameraCoordinates = new CameraCoordinates();
+        private static readonly float BombTriggerTime = 3; //в секундах
+        private static readonly int BombTriggerRadius = 1;
 
         public MainForm()
         {
@@ -106,12 +113,12 @@ namespace Server
                         square.Click += square_Click;
                         square.DoubleClick += square_Click;
                         squaresPanel.Controls.Add(square);
-                        mapUnits.Add(new MapUnit()
+                        mapUnits.Add((new MapUnit()
                         {
                             x = i,
                             z = lines,
                             value = byte.Parse(line[i].ToString())
-                        });
+                        }, square));
                     }
                     lines++;
                 }
@@ -131,15 +138,15 @@ namespace Server
                 if (((Square)sender).Tag == square.Tag)
                 {
                     int temp = (int)square.SquareContent;
-                    temp = ++temp % (Enum.GetNames(typeof(SquareContent)).Length-1);
+                    temp = ++temp % (Enum.GetNames(typeof(SquareContent)).Length - Square.EnumNegativesCount);
                     square.SquareContent = (SquareContent)temp;
 
                     for (int i = 0; i < mapUnits.Count; i++)
                     {
-                        if (square.Tag.ToString() == $"{mapUnits[i].x};{mapUnits[i].z}")
+                        if (square.Tag.ToString() == $"{mapUnits[i].mapUnit.x};{mapUnits[i].mapUnit.z}")
                         {
                             var tempUnit = mapUnits[i];
-                            tempUnit.value = (byte)temp;
+                            tempUnit.mapUnit.value = (byte)temp;
                             mapUnits.RemoveAt(i);
                             mapUnits.Insert(i, tempUnit);
                             break;
@@ -226,18 +233,12 @@ namespace Server
                         {
                             for (int j = 0; j < mapUnits.Count; j++)
                             {
-                                if (mapUnits[j].x == unit.x && mapUnits[j].z == unit.z)
+                                if (mapUnits[j].mapUnit.x == unit.x && mapUnits[j].mapUnit.z == unit.z)
                                 {
+                                    Square tmpSquare = mapUnits[j].square;
+                                    tmpSquare.SquareContent = (SquareContent)unit.value;
                                     mapUnits.RemoveAt(j);
-                                    mapUnits.Insert(j, unit);
-                                    break;
-                                }
-                            }
-                            foreach (Square square in squaresPanel.Controls)
-                            {
-                                if (square.Tag.ToString() == $"{unit.x};{unit.z}")
-                                {
-                                    square.SquareContent = (SquareContent)unit.value;
+                                    mapUnits.Insert(j, (unit, tmpSquare));
                                     break;
                                 }
                             }
@@ -256,10 +257,57 @@ namespace Server
                     }
                     else ServerMode.Server.SendTo(client, "errmove");
                 }
+                else if (msg.StartsWith("bomb"))
+                {
+                    if (bombMapUnit.value != -Square.EnumNegativesCount - 1)
+                    {
+                        ServerMode.Server.SendTo(client, "errbomb");
+                        continue;
+                    }
+                    MapUnit unit = players.Where((tcpClient) => tcpClient.client == client).First().mapUnit;
+                    bombMapUnit = new MapUnit()
+                    {
+                        x = unit.x,
+                        z = unit.z,
+                        value = (int)SquareContent.Bomb
+                    };
+                    ServerMode.Server.SendAll($"bomb({unit.x};{unit.z}){BombTriggerRadius};{BombTriggerTime}");
+                    Thread bombTriggerThread = new Thread(() =>
+                    {
+                        Thread.Sleep((int)(BombTriggerTime * 1000));
+                        for (int i = 0; i < mapUnits.Count; i++)
+                        {
+                            if ((mapUnits[i].mapUnit.x >= bombMapUnit.x - BombTriggerRadius) &&
+                                (mapUnits[i].mapUnit.x <= bombMapUnit.x + BombTriggerRadius) &&
+                                (mapUnits[i].mapUnit.z >= bombMapUnit.z - BombTriggerRadius) &&
+                                (mapUnits[i].mapUnit.z <= bombMapUnit.z + BombTriggerRadius) &&
+                                ((mapUnits[i].mapUnit.value == (int)SquareContent.LightBarrier) ||
+                                (mapUnits[i].mapUnit.value == (int)SquareContent.Bomb)))
+                            {
+                                int x = mapUnits[i].mapUnit.x;
+                                int z = mapUnits[i].mapUnit.z;
+                                Square tmpSquare = mapUnits[i].square;
+                                tmpSquare.SquareContent = SquareContent.Empty;
+                                mapUnits.RemoveAt(i);
+                                mapUnits.Insert(i, (new MapUnit()
+                                {
+                                    x = x,
+                                    z = z,
+                                    value = (int)SquareContent.Empty
+                                }, tmpSquare));
+                            }
+                        }
+                        bombMapUnit = new MapUnit()
+                        {
+                            value = -Square.EnumNegativesCount - 1
+                        };
+                    });
+                    bombTriggerThread.Start();
+                }
                 else if (msg.StartsWith("ack"))
                 {
                     if (msg.Remove(0, 3) == "players")
-                        ServerMode.Server.SendTo(client, $"field{JsonConvert.SerializeObject(mapUnits)}");
+                        ServerMode.Server.SendTo(client, $"field{JsonConvert.SerializeObject(mapUnits.Select((mapUnit) => mapUnit.mapUnit))}");
                 }
                 else ServerMode.Server.SendAll(msg);
             }
@@ -282,17 +330,17 @@ namespace Server
             targetCoordinates = (targetX, targetZ);
             MapUnit nextUnit = new MapUnit
             {
-                value = -2
+                value = -Square.EnumNegativesCount - 1
             };
-            foreach (MapUnit unit in mapUnits)
+            foreach (var unit in mapUnits)
             {
-                if (unit.x == targetX && unit.z == targetZ)
+                if (unit.mapUnit.x == targetX && unit.mapUnit.z == targetZ)
                 {
-                    nextUnit = unit;
+                    nextUnit = unit.mapUnit;
                     break;
                 }
             }
-            if (nextUnit.value == -2)
+            if (nextUnit.value == -Square.EnumNegativesCount - 1)
                 throw new Exception("Не найден следующий за игровым кубик");
             bool isPlayerCube = false;
             foreach (var player in players)
@@ -308,7 +356,9 @@ namespace Server
             {
                 nextUnit.SetContent(playerUnit.value);
                 modifiedUnits.Add(nextUnit);
-                playerUnit.SetContent((int)SquareContent.Empty);
+                if ((bombMapUnit.x == playerUnit.x) && (bombMapUnit.z == playerUnit.z))
+                    playerUnit.SetContent((int)SquareContent.Bomb);
+                else playerUnit.SetContent((int)SquareContent.Empty);
                 modifiedUnits.Add(playerUnit);
                 return true;
             }
@@ -318,7 +368,9 @@ namespace Server
                 {
                     nextUnit.SetContent(playerUnit.value);
                     modifiedUnits.Add(nextUnit);
-                    playerUnit.SetContent((int)SquareContent.Empty);
+                    if ((bombMapUnit.x == playerUnit.x) && (bombMapUnit.z == playerUnit.z))
+                        playerUnit.SetContent((int)SquareContent.Bomb);
+                    else playerUnit.SetContent((int)SquareContent.Empty);
                     modifiedUnits.Add(playerUnit);
                     return true;
                 }
@@ -333,8 +385,8 @@ namespace Server
             //var emptyFields = mapUnits.Where((unit) => unit.value == (int)SquareContent.Empty).ToList();
             var emptyFields = new List<MapUnit>();
             for (int i = 0; i < mapUnits.Count; i++)
-                if (mapUnits[i].value == (int)SquareContent.Empty)
-                    emptyFields.Add(mapUnits[i]);
+                if (mapUnits[i].mapUnit.value == (int)SquareContent.Empty)
+                    emptyFields.Add(mapUnits[i].mapUnit);
 
             Random rnd = new Random();
             bool playersNearby;
@@ -388,14 +440,14 @@ namespace Server
                 ServerMode.Stop();
             StreamWriter sw = new StreamWriter("map_latest.txt", false);
             int latestX = 0;
-            foreach (MapUnit unit in mapUnits)
+            foreach (var unit in mapUnits)
             {
-                if (latestX != unit.z)
+                if (latestX != unit.mapUnit.z)
                 {
                     sw.WriteLine();
-                    latestX = unit.z;
+                    latestX = unit.mapUnit.z;
                 }
-                sw.Write(unit.value);
+                sw.Write(unit.mapUnit.value);
             }
             sw.Flush();
             sw.Close();

@@ -12,11 +12,12 @@ namespace Server
 {
     public enum SquareContent
     {
-        Player = -1, Empty, LightBarrier, HeavyBarrier, Wall
+        Bomb = -2, Player, Empty, LightBarrier, HeavyBarrier, Wall
     }
-
     public partial class Square : UserControl
     {
+        public static readonly int EnumNegativesCount = Enum.GetValues(typeof(SquareContent)).Cast<int>().Where((x) => x < 0).Count();
+
         private SquareContent squareContent;
         public SquareContent SquareContent
         {
@@ -26,8 +27,11 @@ namespace Server
                 squareContent = value;
                 switch (value)
                 {
-                    case SquareContent.Wall:
+                    case SquareContent.Bomb:
                         ForeColor = Color.Black;
+                        break;
+                    case SquareContent.Wall:
+                        ForeColor = Color.DimGray;
                         break;
                     case SquareContent.Player:
                         ForeColor = Color.Blue;
