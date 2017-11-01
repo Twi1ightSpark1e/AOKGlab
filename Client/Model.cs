@@ -67,9 +67,9 @@ namespace Client
         public bool IsMovable { get; private set; }
         public ShapeMode Shape { get; private set; }
 
-        private static _3dsReader boxReader = new _3dsReader("Box.3DS");
-        private static _3dsReader chamferBoxReader = new _3dsReader("ChamferBox.3DS");
-        private static _3dsReader sphereReader = new _3dsReader("Sphere.3DS");
+        private static _3dsReader boxReader = new _3dsReader("models/Box.3DS");
+        private static _3dsReader chamferBoxReader = new _3dsReader("models/ChamferBox.3DS");
+        private static _3dsReader sphereReader = new _3dsReader("models/Sphere.3DS");
 
         public Model(ModelPoint[] points, ushort[] indices, ShapeMode shape)
         {

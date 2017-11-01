@@ -1,16 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading;
 using System.Windows.Forms;
+
+using Newtonsoft.Json;
 
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
-using System.Diagnostics;
-using System.IO;
-using System.Threading;
-using System.Runtime.InteropServices;
-using System.Linq;
-using Newtonsoft.Json;
 
 namespace Client
 {
@@ -23,6 +22,7 @@ namespace Client
     public partial class MainForm : Form
     {
         public static MainForm LastInstance { get; private set; }
+        public static System.Drawing.Size GLControlSize { get; private set; }
 
         private List<string> log = new List<string>();
         private bool isActive;
@@ -71,6 +71,7 @@ namespace Client
         private static bool isCullingFaces;
         private bool waitUntilResultReceive;
         private static float frameRate;
+        private Sprite chuvsuLogo;
         
         private List<(int x, int z)> players = new List<(int x, int z)>();
         private List<GraphicObject> playerObjects = new List<GraphicObject>();
@@ -133,6 +134,7 @@ namespace Client
 
         private void glControl1_Resize(object sender, EventArgs e)
         {
+            GLControlSize = glControl1.Size;
             GL.Viewport(glControl1.Location.X, glControl1.Location.Y, glControl1.Width, glControl1.Height);
             GL.MatrixMode(MatrixMode.Projection);
             GL.LoadIdentity();
@@ -158,6 +160,7 @@ namespace Client
                 //Настройка позиции "глаз"
                 camera.SetCamera();
                 light.Apply();
+                chuvsuLogo.Draw();
                 //Отображаем все элементы
                 for (int i = 0; i < graphicObjects.Count; i++)
                     graphicObjects[i].Show();
@@ -455,15 +458,11 @@ namespace Client
                 LightName = LightName.Light0
             };
             Light.LightMode = LightMode.All;
-        }
 
-        private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
-        {
-            StreamWriter sw = new StreamWriter("log.txt");
-            foreach (string line in log)
-                sw.WriteLine(line);
-            sw.Flush();
-            sw.Close();
+            chuvsuLogo = new Sprite("sprites/chuvsu_logo.png");
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
+            GL.BlendEquation(BlendEquationMode.FuncAdd);
         }
 
         private void changeModelButton_Click(object sender, EventArgs e)

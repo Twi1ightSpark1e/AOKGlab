@@ -93,6 +93,7 @@
             // 
             // lightingButton
             // 
+            this.lightingButton.Anchor = System.Windows.Forms.AnchorStyles.Right;
             this.lightingButton.Enabled = false;
             this.lightingButton.Location = new System.Drawing.Point(615, 277);
             this.lightingButton.Name = "lightingButton";
@@ -117,7 +118,6 @@
             this.Text = "Лабораторная работа №6, клиент";
             this.Activated += new System.EventHandler(this.MainForm_Activated);
             this.Deactivate += new System.EventHandler(this.MainForm_Deactivate);
-            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.MainForm_FormClosed);
             this.ResumeLayout(false);
             this.PerformLayout();
 
