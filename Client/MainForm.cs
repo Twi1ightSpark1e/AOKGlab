@@ -71,8 +71,13 @@ namespace Client
         private static bool isCullingFaces;
         private bool waitUntilResultReceive;
         private static float frameRate;
+
         private Sprite chuvsuLogo;
-        
+        private Sprite bombIcon;
+        private Sprite barIcon;
+        private bool bombHasBeenPlanted = false;
+        private int bombProgress = 0;
+
         private List<(int x, int z)> players = new List<(int x, int z)>();
         private List<GraphicObject> playerObjects = new List<GraphicObject>();
         private static MoveDirection movePositiveX() => MoveDirection.Right;
@@ -155,15 +160,26 @@ namespace Client
                 //Для начала очистим буфер
                 GL.Clear(ClearBufferMask.ColorBufferBit);
                 GL.Clear(ClearBufferMask.DepthBufferBit);
-
-                //Настройки для просмотра
                 //Настройка позиции "глаз"
                 camera.SetCamera();
+                //Включаем источник света
                 light.Apply();
-                chuvsuLogo.Draw();
                 //Отображаем все элементы
                 for (int i = 0; i < graphicObjects.Count; i++)
                     graphicObjects[i].Show();
+                //Рисуем иконку ВУЗа
+                chuvsuLogo.Draw(glControl1.Width - chuvsuLogo.Width, glControl1.Height - chuvsuLogo.Height);
+                //Иконка бомбы и её прогресс
+                if (bombHasBeenPlanted)
+                {
+                    bombIcon.Draw(0, glControl1.Height - bombIcon.Height);
+                    int xOffset = bombIcon.Width + 5;
+                    for (int i = 0; i < bombProgress; i++)
+                    {
+                        barIcon.Draw(xOffset, glControl1.Height - barIcon.Height);
+                        xOffset += barIcon.Width + 5;
+                    }
+                }
                 //Поменяем местами буферы
                 glControl1.SwapBuffers();
             }
@@ -339,7 +355,13 @@ namespace Client
                         graphicObjects.Add(bombObject);
                         Thread bombTriggerThread = new Thread((triggerTime) =>
                         {
-                            Thread.Sleep((int)((float)triggerTime * 1000));
+                            bombHasBeenPlanted = true;
+                            bombProgress = 5;
+                            while (bombProgress > 0)
+                            {
+                                Thread.Sleep((int)((float)triggerTime * 1000 / 5));
+                                bombProgress--;
+                            }
                             for (int i = 0; i < graphicObjects.Count; i++)
                             {
                                 if ((graphicObjects[i].Position.x >= bombObject.Position.x - bombTriggerRadius) &&
@@ -352,6 +374,7 @@ namespace Client
                                 }
                             }
                             graphicObjects.Remove(bombObject);
+                            bombHasBeenPlanted = false;
                         });
                         bombTriggerThread.Start(bombTriggerTime);
                         waitUntilResultReceive = false;
@@ -460,9 +483,8 @@ namespace Client
             Light.LightMode = LightMode.All;
 
             chuvsuLogo = new Sprite("sprites/chuvsu_logo.png");
-            GL.Enable(EnableCap.Blend);
-            GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
-            GL.BlendEquation(BlendEquationMode.FuncAdd);
+            bombIcon = new Sprite("sprites/bomb.ico");
+            barIcon = new Sprite("sprites/bar.bmp");
         }
 
         private void changeModelButton_Click(object sender, EventArgs e)
