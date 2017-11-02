@@ -34,8 +34,6 @@
             this.connectButton = new System.Windows.Forms.Button();
             this.cullFaceModeButton = new System.Windows.Forms.Button();
             this.lightingButton = new System.Windows.Forms.Button();
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
             // changeModelButton
@@ -46,6 +44,7 @@
             this.changeModelButton.Name = "changeModelButton";
             this.changeModelButton.Size = new System.Drawing.Size(114, 36);
             this.changeModelButton.TabIndex = 0;
+            this.changeModelButton.TabStop = false;
             this.changeModelButton.Text = "Сменить модель отображения";
             this.changeModelButton.UseVisualStyleBackColor = true;
             this.changeModelButton.Click += new System.EventHandler(this.changeModelButton_Click);
@@ -88,6 +87,7 @@
             this.cullFaceModeButton.Name = "cullFaceModeButton";
             this.cullFaceModeButton.Size = new System.Drawing.Size(114, 37);
             this.cullFaceModeButton.TabIndex = 8;
+            this.cullFaceModeButton.TabStop = false;
             this.cullFaceModeButton.Tag = "0";
             this.cullFaceModeButton.Text = "Переключить режим отсечения граней";
             this.cullFaceModeButton.UseVisualStyleBackColor = true;
@@ -101,25 +101,16 @@
             this.lightingButton.Name = "lightingButton";
             this.lightingButton.Size = new System.Drawing.Size(114, 36);
             this.lightingButton.TabIndex = 9;
+            this.lightingButton.TabStop = false;
             this.lightingButton.Text = "Изменить режим освещения";
             this.lightingButton.UseVisualStyleBackColor = true;
             this.lightingButton.Click += new System.EventHandler(this.lightingButton_Click);
-            // 
-            // pictureBox1
-            // 
-            this.pictureBox1.Location = new System.Drawing.Point(615, 320);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(114, 105);
-            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
-            this.pictureBox1.TabIndex = 10;
-            this.pictureBox1.TabStop = false;
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(741, 498);
-            this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.lightingButton);
             this.Controls.Add(this.cullFaceModeButton);
             this.Controls.Add(this.connectButton);
@@ -127,10 +118,9 @@
             this.Controls.Add(this.label1);
             this.Controls.Add(this.changeModelButton);
             this.Name = "MainForm";
-            this.Text = "Лабораторная работа №6, клиент";
+            this.Text = "Лабораторная работа №7, клиент";
             this.Activated += new System.EventHandler(this.MainForm_Activated);
             this.Deactivate += new System.EventHandler(this.MainForm_Deactivate);
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -145,7 +135,6 @@
         private System.Windows.Forms.Button connectButton;
         private System.Windows.Forms.Button cullFaceModeButton;
         private System.Windows.Forms.Button lightingButton;
-        internal System.Windows.Forms.PictureBox pictureBox1;
     }
 }
 

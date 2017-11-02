@@ -485,6 +485,11 @@ namespace Client
             chuvsuLogo = new Sprite("sprites/chuvsu_logo.png");
             bombIcon = new Sprite("sprites/bomb.ico");
             barIcon = new Sprite("sprites/bar.bmp");
+
+            foreach (Control control in this.Controls)
+            {
+                control.PreviewKeyDown += new PreviewKeyDownEventHandler(control_PreviewKeyDown);
+            }
         }
 
         private void changeModelButton_Click(object sender, EventArgs e)
@@ -552,6 +557,14 @@ namespace Client
                     break;
             }
             Text = $"FPS: {frameRate.ToString("N2")}; {outputMode}; {cullingMode}; {lightMode}";
+        }
+
+        void control_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
+        {
+            if (e.KeyCode == Keys.Up || e.KeyCode == Keys.Down || e.KeyCode == Keys.Left || e.KeyCode == Keys.Right)
+            {
+                e.IsInputKey = true;
+            }
         }
     }
 }

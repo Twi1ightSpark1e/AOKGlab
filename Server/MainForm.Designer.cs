@@ -96,7 +96,7 @@
             this.Controls.Add(this.portTextBox);
             this.Controls.Add(this.portLabel);
             this.Name = "MainForm";
-            this.Text = "Лабораторная работа №5, сервер";
+            this.Text = "Лабораторная работа №7, сервер";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.MainForm_FormClosed);
             this.ResumeLayout(false);
             this.PerformLayout();
