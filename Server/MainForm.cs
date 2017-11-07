@@ -70,7 +70,7 @@ namespace Server
         };
         private static List<(MapUnit mapUnit, Square square)> mapUnits = new List<(MapUnit mapUnit, Square square)>();
         private static CameraCoordinates cameraCoordinates = new CameraCoordinates();
-        private static readonly float BombTriggerTime = 3; //в секундах
+        private static readonly float BombTriggerTime = 5; //в секундах
         private static readonly int BombTriggerRadius = 1;
 
         public MainForm()

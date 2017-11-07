@@ -19,6 +19,7 @@ namespace Client
         public int Width { get; private set; }
         public int Height { get; private set; }
         public int PixelUnpackBuffer { get; private set; }
+        public const float ImageHeight = 64f;
 
         public Sprite(string filename)
         {
@@ -30,10 +31,12 @@ namespace Client
                 else if (filename.EndsWith("ico"))
                     bm = new Bitmap(new Icon(filename, new Size(64, 64)).ToBitmap());
                 else throw new FormatException("Данный тип файла не поддерживается");
+                bm = new Bitmap(bm.GetThumbnailImage((int)(bm.Width / (bm.Height / ImageHeight)), 64, new Image.GetThumbnailImageAbort(new Func<bool>(() => { return false; })), IntPtr.Zero));
             }
             else throw new FileNotFoundException("Файл не найден");
             bm.RotateFlip(RotateFlipType.Rotate180FlipX);
             bm.MakeTransparent(Color.White);
+            //bm.GetThumbnailImage(bm.Width / (bm.Height / 64), 64, new Image.GetThumbnailImageAbort(new Func<bool>(() => { return false; })), IntPtr.Zero);
             Height = bm.Height;
             Width = bm.Width;
             Pixels = new byte[Height * Width * 4];

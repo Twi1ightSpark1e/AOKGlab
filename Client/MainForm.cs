@@ -62,8 +62,7 @@ namespace Client
         internal static List<GraphicObject> Scene => graphicObjects;
 
         private static List<Material> materials;
-        private static List<Model> models;
-        private Model playerModel, bombModel;
+        private Model playerModel, bombModel, lightBarrierModel, heavyBarrierModel, wallModel, flatModel;
         private int fieldRowsCount, fieldColumnsCount;
         private Light light;
         private static Camera camera;
@@ -72,11 +71,12 @@ namespace Client
         private bool waitUntilResultReceive;
         private static float frameRate;
 
-        private Sprite chuvsuLogo;
+        private Sprite authorsLogo;
         private Sprite bombIcon;
         private Sprite barIcon;
         private bool bombHasBeenPlanted = false;
         private int bombProgress = 0;
+        private const int bombBarsCount = 5;
 
         private List<(int x, int z)> players = new List<(int x, int z)>();
         private List<GraphicObject> playerObjects = new List<GraphicObject>();
@@ -168,7 +168,7 @@ namespace Client
                 for (int i = 0; i < graphicObjects.Count; i++)
                     graphicObjects[i].Show();
                 //Рисуем иконку ВУЗа
-                chuvsuLogo.Draw(glControl1.Width - chuvsuLogo.Width, glControl1.Height - chuvsuLogo.Height);
+                authorsLogo.Draw(glControl1.Width - authorsLogo.Width, glControl1.Height - authorsLogo.Height);
                 //Иконка бомбы и её прогресс
                 if (bombHasBeenPlanted)
                 {
@@ -185,211 +185,212 @@ namespace Client
             }
         }
 
+        private void CreateField(MapUnit[] units, Model lightBarrierModel, Model heavyBarrierModel, Model wallModel, Model flatModel)
+        {
+            graphicObjects.Add(new GraphicObject(flatModel, materials[4], (0, 0), (0, 0), 0)); //плоская модель
+            foreach (MapUnit unit in units)
+            {
+                switch ((ShapeMode)unit.value)
+                {
+                    case ShapeMode.LightBarrier:
+                        graphicObjects.Add(new GraphicObject(lightBarrierModel, materials[0], (unit.x, unit.z), (fieldRowsCount, fieldColumnsCount), 0));
+                        break;
+                    case ShapeMode.HeavyBarrier:
+                        graphicObjects.Add(new GraphicObject(heavyBarrierModel, materials[1], (unit.x, unit.z), (fieldRowsCount, fieldColumnsCount), 0));
+                        break;
+                    case ShapeMode.Wall:
+                        graphicObjects.Add(new GraphicObject(wallModel, materials[3], (unit.x, unit.z), (fieldRowsCount, fieldColumnsCount), 0));
+                        break;
+                }
+            }
+        }
+
+        private void CreatePlayers()
+        {
+            GraphicObject playerObject = new GraphicObject(playerModel, materials[2], players[0], (fieldRowsCount, fieldColumnsCount), 0);
+            playerObject.OnSimulationFinished += () =>
+            {
+                waitUntilResultReceive = false;
+            };
+            graphicObjects.Insert(0, playerObject);
+            playerObjects.Add(playerObject);
+            for (int i = 1; i < players.Count; i++)
+            {
+                var enemyObject = new GraphicObject(playerModel, materials[2], players.ElementAt(i), (fieldRowsCount, fieldColumnsCount), 0);
+                graphicObjects.Insert(0, enemyObject);
+                playerObjects.Add(enemyObject);
+            }
+        }
+
+        private void PlayersHandler(string message)
+        {
+            var coordinates = message.Remove(0, 7).Split('(', ')').ToList().Where((str) => str != string.Empty);
+            foreach (string coordinate in coordinates)
+            {
+                string[] xz = coordinate.Split(';');
+                players.Add((int.Parse(xz[0]), int.Parse(xz[1])));
+            }
+            ClientMode.Client.SendMessage("ackplayers");
+        }
+
+        private void NewPlayerHandler(string message)
+        {
+            var coordinates = message.Remove(0, 10).Split('(', ')').ToList().Where((str) => str != string.Empty);
+            string[] xz = coordinates.ElementAt(0).Split(';');
+            players.Add((int.Parse(xz[0]), int.Parse(xz[1])));
+            var enemyObject = new GraphicObject(playerModel, materials[2], (int.Parse(xz[0]), int.Parse(xz[1])), (fieldRowsCount, fieldColumnsCount), 0);
+            graphicObjects.Add(enemyObject);
+            playerObjects.Add(enemyObject);
+        }
+
+        private void DeletePlayerHandler(string message)
+        {
+            var coordinates = message.Remove(0, 10).Split('(', ')').ToList().Where((str) => str != string.Empty);
+            string[] xz = coordinates.ElementAt(0).Split(';');
+            foreach (var player in players)
+            {
+                if (int.Parse(xz[0]) == player.x && int.Parse(xz[1]) == player.z)
+                {
+                    (int x, int z) coords = (int.Parse(xz[0]), int.Parse(xz[1]));
+                    for (int i = 0; i < players.Count; i++)
+                        if (players[i].Equals(coords))
+                        {
+                            players.RemoveAt(i);
+                            break;
+                        }
+                    for (int i = 0; i < graphicObjects.Count; i++)
+                        if (graphicObjects[i].Position.Equals(coords))
+                        {
+                            graphicObjects.RemoveAt(i);
+                            break;
+                        }
+                    for (int i = 0; i < playerObjects.Count; i++)
+                        if (playerObjects[i].Position.Equals(coords))
+                        {
+                            playerObjects.RemoveAt(i);
+                            break;
+                        }
+                    break;
+                }
+            }
+        }
+
+        private void FieldHandler(string message)
+        {
+            graphicObjects = new List<GraphicObject>();
+            MapUnit[] units = JsonConvert.DeserializeObject<MapUnit[]>(message.Remove(0, 5));
+            fieldColumnsCount = units.Max((unit) => unit.x) + 1;
+            fieldRowsCount = units.Max((unit) => unit.z) + 1;
+            Invoke((MethodInvoker)delegate
+            {
+                flatModel = Model.CreateFlat(fieldRowsCount, fieldColumnsCount);
+            });
+            CreateField(units, lightBarrierModel, heavyBarrierModel, wallModel, flatModel);
+            CreatePlayers();
+            if (!Connected)
+                Invoke((MethodInvoker)delegate
+                {
+                    Connected = true;
+                });
+        }
+
+        private void CloseHandler()
+        {
+            Invoke((MethodInvoker)delegate
+            {
+                Connected = false;
+                GL.ClearColor(new OpenTK.Graphics.Color4(0, 0, 0, 0));
+                graphicObjects.Clear();
+            });
+        }
+
+        private void MoveHandler(string message)
+        {
+            List<string> splitted = message.Split('(', ')').ToList();
+            splitted.RemoveAt(0); //нулевой элемент - координаты передвигающегося кубика; первый элемент - его направление движения
+            string[] xz = splitted[0].Split(';');
+            MoveDirection direction = (MoveDirection)Enum.Parse(typeof(MoveDirection), splitted[1]);
+            foreach (GraphicObject playerObject in playerObjects)
+            {
+                if (playerObject.Position.Equals((int.Parse(xz[0]), int.Parse(xz[1]))))
+                {
+                    playerObject.Move(direction);
+                    break;
+                }
+            }
+        }
+
+        private void BombHandler(string message)
+        {
+            List<string> splitted = message.Split('(', ')').ToList();
+            splitted.RemoveAt(0);
+            string[] xz = splitted[0].Split(';');
+            string[] radiusTime = splitted[1].Split(';');
+            int bombTriggerRadius = int.Parse(radiusTime[0]);
+            float bombTriggerTime = float.Parse(radiusTime[1]);
+            GraphicObject bombObject = new GraphicObject(bombModel, materials[5], ((int.Parse(xz[0]), int.Parse(xz[1]))), (fieldColumnsCount, fieldRowsCount), 0);
+            graphicObjects.Add(bombObject);
+            Thread bombTriggerThread = new Thread((triggerTime) =>
+            {
+                bombHasBeenPlanted = true;
+                bombProgress = bombBarsCount;
+                while (bombProgress > 0)
+                {
+                    Thread.Sleep((int)((float)triggerTime * 1000 / bombBarsCount));
+                    bombProgress--;
+                }
+                for (int i = 0; i < graphicObjects.Count; i++)
+                {
+                    if ((graphicObjects[i].Position.x >= bombObject.Position.x - bombTriggerRadius) &&
+                        (graphicObjects[i].Position.x <= bombObject.Position.x + bombTriggerRadius) &&
+                        (graphicObjects[i].Position.z >= bombObject.Position.z - bombTriggerRadius) &&
+                        (graphicObjects[i].Position.z <= bombObject.Position.z + bombTriggerRadius) &&
+                        (graphicObjects[i].CurrentModel.Shape == ShapeMode.LightBarrier))
+                    {
+                        graphicObjects.RemoveAt(i--);
+                    }
+                }
+                graphicObjects.Remove(bombObject);
+                bombHasBeenPlanted = false;
+            });
+            bombTriggerThread.Start(bombTriggerTime);
+            waitUntilResultReceive = false;
+        }
+
+        private void ErrorHandler(string message)
+        {
+            if ((message.Remove(0, 3) == "move") || ((message.Remove(0, 3) == "bomb")))
+                waitUntilResultReceive = false;
+            else if (message.Remove(0, 3) == "place")
+            {
+                MessageBox.Show("Сервер не может обработать нового игрока");
+                Connected = false;
+            }
+        }
+
         private void connectButton_Click(object sender, EventArgs e)
         {
             addressTextBox.Enabled = connectButton.Enabled = false;
             players.Clear();
             ClientMode.Start(addressTextBox.Text);
-            ClientMode.Client.OnReceive += (message) =>
+            ClientMode.Client.OnReceive += (msg) =>
             {
-                string[] messages = message.Split('&');
-                foreach (string msg in messages)
-                {
-                    if (msg.StartsWith("players"))
-                    {
-                        var coordinates = msg.Remove(0, 7).Split('(', ')').ToList().Where((str) => str != string.Empty);
-                        foreach (string coordinate in coordinates)
-                        {
-                            string[] xz = coordinate.Split(';');
-                            players.Add((int.Parse(xz[0]), int.Parse(xz[1])));
-                        }
-                        ClientMode.Client.SendMessage("ackplayers");
-                    }
-                    else if (msg.StartsWith("newplayer"))
-                    {
-                        var coordinates = msg.Remove(0, 10).Split('(', ')').ToList().Where((str) => str != string.Empty);
-                        string[] xz = coordinates.ElementAt(0).Split(';');
-                        players.Add((int.Parse(xz[0]), int.Parse(xz[1])));
-                        var enemyObject = new GraphicObject(playerModel, materials[2], (int.Parse(xz[0]), int.Parse(xz[1])), (fieldRowsCount, fieldColumnsCount), 0);
-                        graphicObjects.Add(enemyObject);
-                        playerObjects.Add(enemyObject);
-                    }
-                    else if (msg.StartsWith("delplayer"))
-                    {
-                        var coordinates = msg.Remove(0, 10).Split('(', ')').ToList().Where((str) => str != string.Empty);
-                        string[] xz = coordinates.ElementAt(0).Split(';');
-                        foreach (var player in players)
-                        {
-                            if (int.Parse(xz[0]) == player.x && int.Parse(xz[1]) == player.z)
-                            {
-                                (int x, int z) coords = (int.Parse(xz[0]), int.Parse(xz[1]));
-                                for (int i = 0; i < players.Count; i++)
-                                    if (players[i].Equals(coords))
-                                    {
-                                        players.RemoveAt(i);
-                                        break;
-                                    }
-                                for (int i = 0; i < graphicObjects.Count; i++)
-                                    if (graphicObjects[i].Position.Equals(coords))
-                                    {
-                                        graphicObjects.RemoveAt(i);
-                                        break;
-                                    }
-                                for (int i = 0; i < playerObjects.Count; i++)
-                                    if (playerObjects[i].Position.Equals(coords))
-                                    {
-                                        playerObjects.RemoveAt(i);
-                                        break;
-                                    }
-                                break;
-                            }
-                        }
-                    }
-                    else if (msg.StartsWith("field"))
-                    {
-                        graphicObjects = new List<GraphicObject>();
-                        MapUnit[] units = JsonConvert.DeserializeObject<MapUnit[]>(msg.Remove(0, 5));
-                        fieldColumnsCount = units.Max((unit) => unit.x) + 1;
-                        fieldRowsCount = units.Max((unit) => unit.z) + 1;
-                        Invoke((MethodInvoker)delegate
-                        {
-                            models.Add(Model.CreateFlat(fieldRowsCount, fieldColumnsCount));
-                        });
-                        //Получаем модели объектов
-                        Model lightBarrierModel = null, heavyBarrierModel = null, wallModel = null, flatModel = null;
-                        foreach (Model model in models)
-                        {
-                            switch (model.Shape)
-                            {
-                                case ShapeMode.LightBarrier:
-                                    lightBarrierModel = model;
-                                    break;
-                                case ShapeMode.HeavyBarrier:
-                                    heavyBarrierModel = model;
-                                    break;
-                                case ShapeMode.Player:
-                                    playerModel = model;
-                                    break;
-                                case ShapeMode.Bomb:
-                                    bombModel = model;
-                                    break;
-                                case ShapeMode.Wall:
-                                    wallModel = model;
-                                    break;
-                                case ShapeMode.Empty:
-                                    flatModel = model;
-                                    break;
-                            }
-                        }
-                        if (lightBarrierModel == null || heavyBarrierModel == null || playerModel == null || bombModel == null || wallModel == null || flatModel == null)
-                            throw new Exception("Одна из ключевых моделей не определена");
-
-                        graphicObjects.Add(new GraphicObject(flatModel, materials[4], (0, 0), (0, 0), 0)); //плоская модель
-                        foreach (MapUnit unit in units)
-                        {
-                            switch ((ShapeMode)unit.value)
-                            {
-                                case ShapeMode.LightBarrier:
-                                    graphicObjects.Add(new GraphicObject(lightBarrierModel, materials[0], (unit.x, unit.z), (fieldRowsCount, fieldColumnsCount), 0));
-                                    break;
-                                case ShapeMode.HeavyBarrier:
-                                    graphicObjects.Add(new GraphicObject(heavyBarrierModel, materials[1], (unit.x, unit.z), (fieldRowsCount, fieldColumnsCount), 0));
-                                    break;
-                                case ShapeMode.Wall:
-                                    graphicObjects.Add(new GraphicObject(wallModel, materials[3], (unit.x, unit.z), (fieldRowsCount, fieldColumnsCount), 0));
-                                    break;
-                            }
-                        }
-                        GraphicObject playerObject = new GraphicObject(playerModel, materials[2], players[0], (fieldRowsCount, fieldColumnsCount), 0);
-                        playerObject.OnSimulationFinished += () =>
-                        {
-                            waitUntilResultReceive = false;
-                        };
-                        graphicObjects.Insert(0, playerObject);
-                        playerObjects.Add(playerObject);
-                        for (int i = 1; i < players.Count; i++)
-                        {
-                            var enemyObject = new GraphicObject(playerModel, materials[2], players.ElementAt(i), (fieldRowsCount, fieldColumnsCount), 0);
-                            graphicObjects.Insert(0, enemyObject);
-                            playerObjects.Add(enemyObject);
-                        }
-                        if (!Connected)
-                            Invoke((MethodInvoker)delegate
-                            {
-                                Connected = true;
-                            });
-                    }
-                    else if (msg.StartsWith("close"))
-                    {
-                        Invoke((MethodInvoker)delegate
-                        {
-                            Connected = false;
-                            GL.ClearColor(new OpenTK.Graphics.Color4(0, 0, 0, 0));
-                            graphicObjects.Clear();
-                        });
-                    }
-                    else if (msg.StartsWith("move"))
-                    {
-                        List<string> splitted = msg.Split('(', ')').ToList();
-                        splitted.RemoveAt(0); //нулевой элемент - координаты передвигающегося кубика; первый элемент - его направление движения
-                        string[] xz = splitted[0].Split(';');
-                        MoveDirection direction = (MoveDirection)Enum.Parse(typeof(MoveDirection), splitted[1]);
-                        foreach (GraphicObject playerObject in playerObjects)
-                        {
-                            if (playerObject.Position.Equals((int.Parse(xz[0]), int.Parse(xz[1]))))
-                            {
-                                playerObject.Move(direction);
-                                break;
-                            }
-                        }
-                    }
-                    else if (msg.StartsWith("bomb"))
-                    {
-                        List<string> splitted = msg.Split('(', ')').ToList();
-                        splitted.RemoveAt(0);
-                        string[] xz = splitted[0].Split(';');
-                        string[] radiusTime = splitted[1].Split(';');
-                        int bombTriggerRadius = int.Parse(radiusTime[0]);
-                        float bombTriggerTime = float.Parse(radiusTime[1]);
-                        GraphicObject bombObject = new GraphicObject(bombModel, materials[5], ((int.Parse(xz[0]), int.Parse(xz[1]))), (fieldColumnsCount, fieldRowsCount), 0);
-                        graphicObjects.Add(bombObject);
-                        Thread bombTriggerThread = new Thread((triggerTime) =>
-                        {
-                            bombHasBeenPlanted = true;
-                            bombProgress = 5;
-                            while (bombProgress > 0)
-                            {
-                                Thread.Sleep((int)((float)triggerTime * 1000 / 5));
-                                bombProgress--;
-                            }
-                            for (int i = 0; i < graphicObjects.Count; i++)
-                            {
-                                if ((graphicObjects[i].Position.x >= bombObject.Position.x - bombTriggerRadius) &&
-                                    (graphicObjects[i].Position.x <= bombObject.Position.x + bombTriggerRadius) &&
-                                    (graphicObjects[i].Position.z >= bombObject.Position.z - bombTriggerRadius) &&
-                                    (graphicObjects[i].Position.z <= bombObject.Position.z + bombTriggerRadius) &&
-                                    (graphicObjects[i].CurrentModel.Shape == ShapeMode.LightBarrier))
-                                {
-                                    graphicObjects.RemoveAt(i--);
-                                }
-                            }
-                            graphicObjects.Remove(bombObject);
-                            bombHasBeenPlanted = false;
-                        });
-                        bombTriggerThread.Start(bombTriggerTime);
-                        waitUntilResultReceive = false;
-                    }
-                    else if (msg.StartsWith("err"))
-                    {
-                        if ((msg.Remove(0, 3) == "move") || ((msg.Remove(0, 3) == "bomb")))
-                            waitUntilResultReceive = false;
-                        else if (msg.Remove(0, 3) == "place")
-                        {
-                            MessageBox.Show("Сервер не может обработать нового игрока");
-                            Connected = false;
-                        }
-                    }
-                }
+                if (msg.StartsWith("players"))
+                    PlayersHandler(msg);
+                else if (msg.StartsWith("newplayer"))
+                    NewPlayerHandler(msg);
+                else if (msg.StartsWith("delplayer"))
+                    DeletePlayerHandler(msg);
+                else if (msg.StartsWith("field"))
+                    FieldHandler(msg);
+                else if (msg.StartsWith("close"))
+                    CloseHandler();
+                else if (msg.StartsWith("move"))
+                    MoveHandler(msg);
+                else if (msg.StartsWith("bomb"))
+                    BombHandler(msg);
+                else if (msg.StartsWith("err"))
+                    ErrorHandler(msg);
             };
         }
 
@@ -453,15 +454,11 @@ namespace Client
             ChangeCullingFaces(true);
             Model.OutputMode = OutputMode.Triangles;
 
-            models = new List<Model>()
-            {
-                Model.CreateLightBarrier(),
-                Model.CreateHeavyBarrier(),
-                Model.CreatePlayer(),
-                Model.CreateBomb(),
-                Model.CreateWall()
-            };
-
+            lightBarrierModel = Model.CreateLightBarrier();
+            heavyBarrierModel = Model.CreateHeavyBarrier();
+            playerModel = Model.CreatePlayer();
+            bombModel = Model.CreateBomb();
+            wallModel = Model.CreateWall();
             materials = new List<Material>()
             {
                 Material.CreateLightBarrier(),
@@ -471,7 +468,6 @@ namespace Client
                 Material.CreateFlat(),
                 Material.CreateBomb()
             };
-
             light = new Light()
             {
                 Position = new Vector3(10, 10, 10),
@@ -482,7 +478,7 @@ namespace Client
             };
             Light.LightMode = LightMode.All;
 
-            chuvsuLogo = new Sprite("sprites/chuvsu_logo.png");
+            authorsLogo = new Sprite("sprites/authors.png");
             bombIcon = new Sprite("sprites/bomb.ico");
             barIcon = new Sprite("sprites/bar.bmp");
 
