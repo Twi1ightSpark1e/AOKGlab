@@ -1,13 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Runtime.InteropServices;
 
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
-using System.Diagnostics;
 
 namespace Client
 {
@@ -183,7 +177,12 @@ namespace Client
                 if (MoveProgress >= 1)
                 {
                     MoveProgress = 1;
-                    nextObject = null;
+                    Position = (position.x, position.z); //из-за того, что позиция немного улетает когда окно неактивно
+                    if (nextObject != null)
+                    {
+                        nextObject.Position = (nextObject.Position.x, nextObject.Position.z); //из-за того, что позиция немного улетает когда окно неактивно
+                        nextObject = null;
+                    }
                     currentMoveDirection = MoveDirection.None;
                     OnSimulationFinished?.Invoke();
                 }

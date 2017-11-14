@@ -59,7 +59,6 @@
   <ItemGroup>
     <Compile Include="3dsReader.cs" />
     <Compile Include="Camera.cs" />
-    <Compile Include="ClientMode.cs" />
     <Compile Include="ClientSocket.cs" />
     <Compile Include="GraphicObject.cs" />
     <Compile Include="Light.cs" />

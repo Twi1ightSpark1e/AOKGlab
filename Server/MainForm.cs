@@ -362,7 +362,7 @@ namespace Server
                 modifiedUnits.Add(playerUnit);
                 return true;
             }
-            else if (nextUnit.value == (int)SquareContent.LightBarrier && /*playerUnit.value == (int)SquareContent.Player*/isPlayerCube)
+            else if (nextUnit.value == (int)SquareContent.LightBarrier && isPlayerCube)
             {
                 if (MoveSquare(direction, nextUnit, ref modifiedUnits, out _))
                 {

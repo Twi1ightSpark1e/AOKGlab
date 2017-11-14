@@ -46,34 +46,36 @@ namespace Client
 
 		public void Connect(string host, int port)
 		{
+            Host = host;
+            Port = port;
 			if ((Host != "") && (Port != 0))
 			{
 				IPAddress parseAddress;
-				var list = IPAddress.TryParse(host, out parseAddress) ? new[] {parseAddress} : Dns.GetHostEntry(Host).AddressList;
+				var list = IPAddress.TryParse(Host, out parseAddress) ? new[] {parseAddress} : Dns.GetHostEntry(Host).AddressList;
 				foreach (IPAddress address in list)
 				{
 					client = new TcpClient();
-                    client.ReceiveBufferSize = client.SendBufferSize = 64536;
-					var connectionTask = client.ConnectAsync(address, port);
+                    client.ReceiveBufferSize = client.SendBufferSize = 65536;
+					var connectionTask = client.ConnectAsync(address, Port);
 					connectionTask.Wait(3000);
 					if (connectionTask.IsCompleted)
 						break;
 				}
 				if (!client.Connected)
-					throw new Exception("Cannot establish connection to server");
+					throw new Exception("Не удалось установить подключение к серверу");
 				OnConnected?.Invoke();
 				clientStream = client.GetStream();
 				message = new byte[client.ReceiveBufferSize];
 				clientStream.BeginRead(message, 0, message.Length, Listen, message);
 			}
-			else throw new Exception("Host or port is not specified");
+			else throw new Exception("Адрес сервера или порт не установлены");
 		}
 
 		public void Disconnect()
 		{
 			client.Close();
-			CallDisconnect("");
-		}
+            OnDisconnect?.Invoke(null);
+        }
 
 		private void Listen(IAsyncResult res)
 		{
@@ -104,7 +106,7 @@ namespace Client
 		public void SendMessage(string message)
 		{
 			if (!client.Connected)
-				throw new Exception("No connection with server");
+				throw new Exception("Нет подключения к серверу");
 			byte[] messageBytes = Encoding.ASCII.GetBytes(message);
 			clientStream.Write(messageBytes, 0, messageBytes.Length);
 		}

@@ -19,10 +19,11 @@ namespace Client
 
     class Camera
     {
+        // событие, срабатываемое при смене направлений движения
         internal delegate void OnChangedDirectionsDelegate(int state);
         public event OnChangedDirectionsDelegate OnChangedDirections;
         private int lastState = 1;
-
+        // настройки камеры
         public float RadianX { get; set; }
         public float RadianY { get; set; }
         public float Radius { get; set; }
@@ -30,9 +31,10 @@ namespace Client
         public Vector3 Target { get; set; }
         public Vector3 Up { get; set; }
 
-        public Directions CurrentDirection { get; set; }
-        public float Speed => 2f;
+        public Directions CurrentDirection { get; set; } // направление движение камеры - меняется перед каждым Simulate'ом
+        public float Speed => 2f; // скорость движения камеры
 
+        // установка камеры при рендере каждого кадра
         public void SetCamera()
         {
             GL.MatrixMode(MatrixMode.Modelview);
@@ -41,6 +43,8 @@ namespace Client
             Matrix4 modelview = Matrix4.LookAt(Eye, Target, Up);
             GL.LoadMatrix(ref modelview);
         }
+
+        // вычисление текущей позиции просмотра для отслеживания изменения навигационных кнопок
         public int ViewPosition()
         {
             while (RadianX > 6.28f)
@@ -57,6 +61,8 @@ namespace Client
                 return 4;
             return 1;
         }
+
+        // вычисляем координаты камеры на основе имеющихся RadianX, RadianY и Radius
         public void SetEye(float radianX, float radianY, float radius)
         {
             var eye = Eye;

@@ -22,12 +22,10 @@ namespace Client
     public partial class MainForm : Form
     {
         public static MainForm LastInstance { get; private set; }
-        public static System.Drawing.Size GLControlSize { get; private set; }
-
-        private List<string> log = new List<string>();
+        private ClientSocket clientSocket;
         private bool isActive;
-        private static bool connected;
-        public static bool Connected
+        private bool connected;
+        public bool Connected
         {
             get
             {
@@ -36,10 +34,17 @@ namespace Client
             set
             {
                 connected = value;
-                LastInstance.addressTextBox.Enabled = LastInstance.connectButton.Enabled = !connected;
-                LastInstance.changeModelButton.Enabled = LastInstance.cullFaceModeButton.Enabled = LastInstance.lightingButton.Enabled = connected;
+                addressTextBox.Enabled = !connected;
+                changeModelButton.Enabled = cullFaceModeButton.Enabled = lightingButton.Enabled = connected;
+                connectButton.Click -= connectButton_Click;
+                connectButton.Click -= disconnectButton_Click;
                 if (value)
                 {
+                    connectButton.Enabled = true;
+                    connectButton.Text = "Отключиться";
+                    connectButton.Click -= connectButton_Click;
+                    connectButton.Click += disconnectButton_Click;
+
                     Application.Idle += LastInstance.mainForm_onIdle;
                     if (stopwatch == null)
                         stopwatch = Stopwatch.StartNew();
@@ -50,9 +55,19 @@ namespace Client
                 }
                 else
                 {
+                    connectButton.Enabled = true;
+                    connectButton.Text = "Подключиться";
+                    connectButton.Click += connectButton_Click;
+                    connectButton.Click -= disconnectButton_Click;
+
                     Application.Idle -= LastInstance.mainForm_onIdle;
                     stopwatch?.Stop();
                     fpsCountHelper?.Stop();
+
+                    GL.ClearColor(new OpenTK.Graphics.Color4(0, 0, 0, 0));
+                    GL.Clear(ClearBufferMask.ColorBufferBit);
+                    GL.Clear(ClearBufferMask.DepthBufferBit);
+                    LastInstance.glControl1.SwapBuffers();
                 }
                 LastInstance.glControl1.Invalidate();
             }
@@ -139,7 +154,6 @@ namespace Client
 
         private void glControl1_Resize(object sender, EventArgs e)
         {
-            GLControlSize = glControl1.Size;
             GL.Viewport(glControl1.Location.X, glControl1.Location.Y, glControl1.Width, glControl1.Height);
             GL.MatrixMode(MatrixMode.Projection);
             GL.LoadIdentity();
@@ -230,7 +244,14 @@ namespace Client
                 string[] xz = coordinate.Split(';');
                 players.Add((int.Parse(xz[0]), int.Parse(xz[1])));
             }
-            ClientMode.Client.SendMessage("ackplayers");
+            try
+            {
+                clientSocket.SendMessage("ackplayers");
+            }
+            catch
+            {
+                Connected = false;
+            }
         }
 
         private void NewPlayerHandler(string message)
@@ -299,7 +320,6 @@ namespace Client
             Invoke((MethodInvoker)delegate
             {
                 Connected = false;
-                GL.ClearColor(new OpenTK.Graphics.Color4(0, 0, 0, 0));
                 graphicObjects.Clear();
             });
         }
@@ -318,6 +338,7 @@ namespace Client
                     break;
                 }
             }
+            Debug.WriteLine(JsonConvert.SerializeObject(playerObjects.Select((player) => player.Position)));
         }
 
         private void BombHandler(string message)
@@ -372,8 +393,13 @@ namespace Client
         {
             addressTextBox.Enabled = connectButton.Enabled = false;
             players.Clear();
-            ClientMode.Start(addressTextBox.Text);
-            ClientMode.Client.OnReceive += (msg) =>
+            playerObjects.Clear();
+            clientSocket = new ClientSocket(addressTextBox.Text, 4115);
+            clientSocket.OnDisconnect += (reason) =>
+            {
+                Connected = false;
+            };
+            clientSocket.OnReceive += (msg) =>
             {
                 if (msg.StartsWith("players"))
                     PlayersHandler(msg);
@@ -392,6 +418,20 @@ namespace Client
                 else if (msg.StartsWith("err"))
                     ErrorHandler(msg);
             };
+            try
+            {
+                clientSocket.Connect();
+            }
+            catch (AggregateException exception)
+            {
+                MessageBox.Show($"Произошла ошибка: {exception.Flatten()}");
+                Connected = false;
+            }
+        }
+
+        private void disconnectButton_Click(object sender, EventArgs e)
+        {
+            clientSocket.Disconnect();
         }
 
         private void mainForm_onIdle(object sender, EventArgs e)
@@ -426,12 +466,26 @@ namespace Client
                     {
                         MoveDirection moveDirection = (MoveDirection)move;
                         waitUntilResultReceive = true;
-                        ClientMode.Client.SendMessage($"move{moveDirection}");
+                        try
+                        { 
+                            clientSocket.SendMessage($"move{moveDirection}");
+                        }
+                        catch
+                        {
+                            Connected = false;
+                        }
                     }
                     else if (state.IsKeyDown(Key.Space))
                     {
                         waitUntilResultReceive = true;
-                        ClientMode.Client.SendMessage("bomb");
+                        try
+                        {
+                            clientSocket.SendMessage("bomb");
+                        }
+                        catch
+                        {
+                            Connected = false;
+                        }
                     }
                 }
             }
@@ -486,6 +540,8 @@ namespace Client
             {
                 control.PreviewKeyDown += new PreviewKeyDownEventHandler(control_PreviewKeyDown);
             }
+
+            Connected = false;
         }
 
         private void changeModelButton_Click(object sender, EventArgs e)

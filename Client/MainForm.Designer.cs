@@ -77,7 +77,6 @@
             this.connectButton.TabIndex = 6;
             this.connectButton.Text = "Подключиться";
             this.connectButton.UseVisualStyleBackColor = true;
-            this.connectButton.Click += new System.EventHandler(this.connectButton_Click);
             // 
             // cullFaceModeButton
             // 
