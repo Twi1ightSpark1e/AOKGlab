@@ -8,27 +8,22 @@ using System.Threading.Tasks;
 
 namespace Client
 {
-    enum LightMode
-    {
-        All, OnlyAmbient, OnlyDiffuse, OnlySpecular
-    }
-
     class Light
     {
-        public Vector3 Position { get; set; }
-        public Vector3 Ambient { get; set; }
-        public Vector3 Diffuse { get; set; }
-        public Vector3 Specular { get; set; }
-        public LightName LightName { get; set; }
-        public static LightMode LightMode { get; set; }
+        public Vector3 Position { get; set; } // координаты источника света
+        public Vector3 Ambient { get; set; } // фоновая составляющая источника света
+        public Vector3 Diffuse { get; set; } // диффузная составляющая источника света
+        public Vector3 Specular { get; set; } // зеркальная составляющая источника света
+        public LightName LightName { get; set; } // имя источника света
+        public static LightMode LightMode { get; set; } // текущий режим освещения
 
         public void Apply()
         {
+            // задаём составляющие в зависимости от текущего режима освещения
+            Vector3 emptyVector = new Vector3();
             Vector3 currentAmbient = Ambient;
             Vector3 currentDiffuse = Diffuse;
             Vector3 currentSpecular = Specular;
-            Vector3 emptyVector = new Vector3();
-
             switch (LightMode)
             {
                 case LightMode.OnlyAmbient:
@@ -44,7 +39,7 @@ namespace Client
                     currentDiffuse = emptyVector;
                     break;
             }
-
+            // "применяем" источник света
             GL.Enable((EnableCap)LightName);
             GL.Light(LightName, LightParameter.Position, new float[] { Position.X, Position.Y, Position.Z });
             GL.Light(LightName, LightParameter.Ambient, new float[] { currentAmbient.X, currentAmbient.Y, currentAmbient.Z, 1 });

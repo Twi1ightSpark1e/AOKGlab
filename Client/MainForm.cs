@@ -13,12 +13,6 @@ using OpenTK.Input;
 
 namespace Client
 {
-    public struct MapUnit
-    {
-        public int x, z;
-        public byte value;
-    }
-
     public partial class MainForm : Form
     {
         public static MainForm LastInstance { get; private set; }

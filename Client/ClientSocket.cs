@@ -1,15 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Client
 {
 	class ClientSocket
 	{
+        // информация о сервере и состояние подключения
 		public string Host { get; set; }
 		public int Port { get; set; }
 		public bool Connected => client.Connected;
@@ -50,8 +48,10 @@ namespace Client
             Port = port;
 			if ((Host != "") && (Port != 0))
 			{
+                // разрешаем DNS или парсим адрес в IPAddress
 				IPAddress parseAddress;
 				var list = IPAddress.TryParse(Host, out parseAddress) ? new[] {parseAddress} : Dns.GetHostEntry(Host).AddressList;
+                // по каждому адресу из списка разрешения пытаемся подключиться
 				foreach (IPAddress address in list)
 				{
 					client = new TcpClient();
@@ -61,10 +61,12 @@ namespace Client
 					if (connectionTask.IsCompleted)
 						break;
 				}
+                // если не удалось подключиться - вылетаем
 				if (!client.Connected)
 					throw new Exception("Не удалось установить подключение к серверу");
-				OnConnected?.Invoke();
-				clientStream = client.GetStream();
+                clientStream = client.GetStream();
+                OnConnected?.Invoke();
+                // начало чтения из сетевого потока
 				message = new byte[client.ReceiveBufferSize];
 				clientStream.BeginRead(message, 0, message.Length, Listen, message);
 			}
@@ -79,7 +81,7 @@ namespace Client
 
 		private void Listen(IAsyncResult res)
 		{
-			int read;
+			int read; // количество байт, считанных из сетевого потока
 			try
 			{
 				read = clientStream.EndRead(res);
@@ -96,7 +98,8 @@ namespace Client
 					CallDisconnect("Сервер закрыл соединение");
 				return;
 			}
-            clientStream.BeginRead(message, 0, message.Length, Listen, message);
+            clientStream.BeginRead(message, 0, message.Length, Listen, message); // сразу начинаем следующее считывание, чтобы более оперативно получать обновления
+            // преобразовываем массив байт в строку и поднимаем событие
 			message = res.AsyncState as byte[];
 			string messageString = Encoding.Default.GetString(message);
 			messageString = messageString.Substring(0, read);
@@ -107,7 +110,7 @@ namespace Client
 		{
 			if (!client.Connected)
 				throw new Exception("Нет подключения к серверу");
-			byte[] messageBytes = Encoding.ASCII.GetBytes(message);
+			byte[] messageBytes = Encoding.Default.GetBytes(message);
 			clientStream.Write(messageBytes, 0, messageBytes.Length);
 		}
 

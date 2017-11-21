@@ -5,18 +5,6 @@ using OpenTK.Graphics.OpenGL;
 
 namespace Client
 {
-    [Flags]
-    enum Directions
-    {
-        None = 0x1,
-        Left = 0x2,
-        Right = 0x4,
-        Up = 0x8,
-        Down = 0x10,
-        Forward = 0x20,
-        Backward = 0x40
-    }
-
     class Camera
     {
         // событие, срабатываемое при смене направлений движения

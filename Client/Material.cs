@@ -10,12 +10,12 @@ namespace Client
 {
     class Material
     {
-        public Vector3 Ambient { get; set; }
-        public Vector3 Diffuse { get; set; }
-        public Vector3 Specular { get; set; }
-        public Vector3 Emission { get; set; }
-        public float Shininess { get; set; }
-
+        public Vector3 Ambient { get; set; } // фоновая отражающая способность материала
+        public Vector3 Diffuse { get; set; } // диффузная отражающая способность материала
+        public Vector3 Specular { get; set; } // зеркальная отражающая способность материала
+        public Vector3 Emission { get; set; } // излучающая способность материала
+        public float Shininess { get; set; } // самосвечение
+        #region фабрика материалов
         public static Material CreateWall()
         {
             return new Material()
@@ -73,7 +73,7 @@ namespace Client
                 Specular = new Vector3(.1f, .1f, .1f)
             };
         }
-
+        #endregion
         public void Apply()
         {
             GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Ambient, new float[] { Ambient.X, Ambient.Y, Ambient.Z, 1 });

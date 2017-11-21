@@ -5,26 +5,21 @@ using OpenTK.Graphics.OpenGL;
 
 namespace Client
 {
-    enum MoveDirection
-    {
-        None = 0,
-        Left = -2,
-        Up = -1,
-        Down = 1,
-        Right = 2
-    }
     class GraphicObject
     {
+        // событие, поднимаемое тогда, когда объект закончил движение
         internal delegate void OnSimulationFinishedDelegate();
         public event OnSimulationFinishedDelegate OnSimulationFinished;
 
+        private MoveDirection currentMoveDirection; // текущее направление движения или None, если объект стоит на месте
         public bool IsPlayerObject => CurrentModel.Shape == ShapeMode.Player;
-        private MoveDirection currentMoveDirection;
         public bool IsMoving => currentMoveDirection != MoveDirection.None;
-        public float MoveProgress { get; private set; }
+        public float MoveProgress { get; private set; } // прогресс движения; изменяется от 0 - начальная точка, до 1 - конечная точка
+        // внешний вид объекта
         public Model CurrentModel { get; set; }
         public Material CurrentMaterial { get; set; }
-        public float Speed => 4f;
+        public float Speed => 4f; // скорость передвижения объекта
+        // позиция графического объекта
         private (int x, int z) position;
         public (int x, int z) Position
         {
@@ -32,21 +27,24 @@ namespace Client
             set
             {
                 position = value;
-                translation = new Vector3((value.x - xLength / 2) * 2, 0, (value.z - zLength / 2) * 2);
-                modelMatrix = Matrix4.Mult(Matrix4.Mult(Matrix4.Identity, Matrix4.CreateTranslation(translation)), Matrix4.CreateRotationY(angle));
+                Translation = new Vector3((value.x - xLength / 2) * 2, 0, (value.z - zLength / 2) * 2); // устанавливаем вектор переноса
             }
         }
+        // вектор "переноса", используемый для отображения объекта на карте
         private Vector3 translation;
         private Vector3 Translation
         {
             set
             {
                 translation = value;
-                modelMatrix = Matrix4.Mult(Matrix4.Mult(Matrix4.Identity, Matrix4.CreateTranslation(translation)), Matrix4.CreateRotationY(angle));
+                // вычисляем матрицу модели, чтобы не перемножать матрицы с рендером каждого кадра
+                modelMatrix = Matrix4.Mult(
+                    Matrix4.Mult(Matrix4.Identity, Matrix4.CreateTranslation(translation)), 
+                    Matrix4.CreateRotationY(angle)); 
             }
         }
-        private GraphicObject nextObject;
-
+        private GraphicObject nextObject; // следующий за движущимся объектом объект, чтобы передвигать и его тоже
+        // угол поворота объекта
         private float angle;
         public float Angle
         {
@@ -54,11 +52,14 @@ namespace Client
             set
             {
                 angle = value;
-                modelMatrix = Matrix4.Mult(Matrix4.Mult(Matrix4.Identity, Matrix4.CreateTranslation(translation)), Matrix4.CreateRotationY(angle));
+                // вычисляем матрицу модели, чтобы не перемножать матрицы с рендером каждого кадра
+                modelMatrix = Matrix4.Mult(
+                    Matrix4.Mult(Matrix4.Identity, Matrix4.CreateTranslation(translation)), 
+                    Matrix4.CreateRotationY(angle));
             }
         }
+        // размеры игрового поля для точного позиционирования всех объектов в центре
         private int xLength, zLength;
-
         private Matrix4 modelMatrix;
 
         public GraphicObject(Model model, Material material, (int x, int y) position, (int xMax, int yMax) maxPosition, float angle)
@@ -71,48 +72,13 @@ namespace Client
             Position = (position.x, position.y);
         }
 
-        public bool CanMove(MoveDirection direction)
-        {
-            if (!CurrentModel.IsMovable || IsMoving)
-                return false;
-            int targetX = position.x, targetZ = position.z;
-            switch (direction)
-            {
-                case MoveDirection.Up:
-                case MoveDirection.Down:
-                    targetZ += Math.Sign((sbyte)direction);
-                    break;
-                case MoveDirection.Left:
-                case MoveDirection.Right:
-                    targetX += Math.Sign((sbyte)direction);
-                    break;
-            }
-            nextObject = null;
-            foreach (GraphicObject graphicObject in MainForm.Scene)
-            {
-                if (graphicObject.Position.x == targetX &&
-                    graphicObject.Position.z == targetZ &&
-                    graphicObject.CurrentModel.Shape != ShapeMode.Empty)
-                {
-                    nextObject = graphicObject;
-                    break;
-                }
-            }
-            if (nextObject == null) //нет фигуры, только плоскость
-                return true;
-            if (!IsPlayerObject && nextObject.CurrentModel.Shape != ShapeMode.Empty)
-                return false;
-            if (nextObject.CanMove(direction))
-                return true;
-            return false;
-        }
-
         public void Move(MoveDirection direction)
         {
             if (!IsMoving)
             {
                 MoveProgress = 0;
                 currentMoveDirection = direction;
+                // получаем координаты места, в котором окажется объект по окончанию движения
                 switch (currentMoveDirection)
                 {
                     case MoveDirection.Up:
@@ -124,6 +90,7 @@ namespace Client
                         position = (position.x + Math.Sign((sbyte)currentMoveDirection), position.z);
                         break;
                 }
+                // находим объект по полученным координатам
                 foreach (GraphicObject graphicObject in MainForm.Scene)
                 {
                     if (graphicObject.Position.x == position.x &&
@@ -153,8 +120,8 @@ namespace Client
             if (currentMoveDirection != MoveDirection.None)
             {
                 MoveProgress = MoveProgress + secondsElapsed * Speed;
+                // в зависимости от направления движения
                 Vector3 nextTranslation;
-
                 switch (currentMoveDirection)
                 {
                     case MoveDirection.Up:
