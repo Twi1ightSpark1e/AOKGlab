@@ -8,29 +8,36 @@ using OpenTK.Graphics.OpenGL;
 using OpenTK;
 using System.Runtime.InteropServices;
 
+using static Client.Configuration.Configuration;
+
 namespace Client
 {
     struct ModelPoint
     {
         Vector3 coordinates, normals;
+        Vector2 texCoords;
 
-        public ModelPoint((float x, float y, float z) coordinates, (float x, float y, float z) normals)
+        public ModelPoint((float x, float y, float z) coordinates, (float x, float y, float z) normals, (float s, float t) texCoords)
         {
             this.coordinates = new Vector3(coordinates.x, coordinates.y, coordinates.z);
             this.normals = new Vector3(normals.x, normals.y, normals.z);
+            this.texCoords = new Vector2(texCoords.s, texCoords.t);
         }
 
-        public ModelPoint(Vector3 coordinates, Vector3 normals)
+        public ModelPoint(Vector3 coordinates, Vector3 normals, Vector2 texCoords)
         {
             this.coordinates = coordinates;
             this.normals = normals;
+            this.texCoords = texCoords;
         }
         // размер структуры
-        public static int Size() => Vector3.SizeInBytes * 2;
+        public static int Size() => Vector3.SizeInBytes * 2 + Vector2.SizeInBytes;
         // смещение поля coordinates
         public static IntPtr CoordinatesOffset() => Marshal.OffsetOf<ModelPoint>("coordinates");
         // смещение поля normals
         public static IntPtr NormalsOffset() => Marshal.OffsetOf<ModelPoint>("normals");
+        // смещение поля texcoords
+        public static IntPtr TexCoordsOffset() => Marshal.OffsetOf<ModelPoint>("texCoords");
     }
 
     class Model
@@ -42,9 +49,9 @@ namespace Client
         public static OutputMode OutputMode { get; set; }  // режим вывода
         public ShapeMode Shape { get; private set; }  // форма объекта
         // загрузчики моделей из файлов
-        private static _3dsReader boxReader = new _3dsReader("models/Box.3DS");
-        private static _3dsReader chamferBoxReader = new _3dsReader("models/ChamferBox.3DS");
-        private static _3dsReader sphereReader = new _3dsReader("models/Sphere.3DS");
+        // public static _3dsReader boxReader;
+        //private static _3dsReader chamferBoxReader = new _3dsReader("models/ChamferBox.3DS");
+        // public static _3dsReader sphereReader;
 
         public Model(ModelPoint[] points, ushort[] indices, ShapeMode shape)
         {
@@ -56,62 +63,67 @@ namespace Client
         #region фабрика моделей
         public static Model CreateLightBarrier()
         {
-            ModelPoint[] points = new ModelPoint[chamferBoxReader.Vertices.Length];
+            _3dsReader reader = _3dsReader.GetReaderByFilename(LightObject.model.fileName, LightObject.model.roughNormals);
+            ModelPoint[] points = new ModelPoint[reader.Vertices.Length];
             int i = 0;
-            foreach (Vector3 vertex in chamferBoxReader.Vertices)
+            foreach (Vector3 vertex in reader.Vertices)
             {
-                points[i] = new ModelPoint(vertex * 2, chamferBoxReader.Normals[i]);
+                points[i] = new ModelPoint(vertex * 2, reader.Normals[i], reader.TexCoords[i]);
                 i++;
             }
-            return new Model(points, chamferBoxReader.Indices, ShapeMode.LightBarrier);
+            return new Model(points, reader.Indices, ShapeMode.LightBarrier);
         }
 
         public static Model CreateHeavyBarrier()
         {
-            ModelPoint[] points = new ModelPoint[chamferBoxReader.Vertices.Length];
+            _3dsReader reader = _3dsReader.GetReaderByFilename(HeavyObject.model.fileName, HeavyObject.model.roughNormals);
+            ModelPoint[] points = new ModelPoint[reader.Vertices.Length];
             int i = 0;
-            foreach (Vector3 vertex in chamferBoxReader.Vertices)
+            foreach (Vector3 vertex in reader.Vertices)
             {
-                points[i] = new ModelPoint(vertex * 2, chamferBoxReader.Normals[i]);
+                points[i] = new ModelPoint(vertex * 2, reader.Normals[i], reader.TexCoords[i]);
                 i++;
             }
-            return new Model(points, chamferBoxReader.Indices, ShapeMode.HeavyBarrier);
+            return new Model(points, reader.Indices, ShapeMode.HeavyBarrier);
         }
 
         public static Model CreatePlayer()
         {
-            ModelPoint[] points = new ModelPoint[sphereReader.Vertices.Length];
+            _3dsReader reader = _3dsReader.GetReaderByFilename(Player.model.fileName, Player.model.roughNormals);
+            ModelPoint[] points = new ModelPoint[reader.Vertices.Length];
             int i = 0;
-            foreach (Vector3 vertex in sphereReader.Vertices)
+            foreach (Vector3 vertex in reader.Vertices)
             {
-                points[i] = new ModelPoint(vertex * 2, sphereReader.Normals[i]);
+                points[i] = new ModelPoint(vertex * 2, reader.Normals[i], reader.TexCoords[i]);
                 i++;
             }
-            return new Model(points, sphereReader.Indices, ShapeMode.Player);
+            return new Model(points, reader.Indices, ShapeMode.Player);
         }
 
         public static Model CreateBomb()
         {
-            ModelPoint[] points = new ModelPoint[sphereReader.Vertices.Length];
+            _3dsReader reader = _3dsReader.GetReaderByFilename(Bomb.model.fileName, Bomb.model.roughNormals);
+            ModelPoint[] points = new ModelPoint[reader.Vertices.Length];
             int i = 0;
-            foreach (Vector3 vertex in sphereReader.Vertices)
+            foreach (Vector3 vertex in reader.Vertices)
             {
-                points[i] = new ModelPoint(vertex * 2, sphereReader.Normals[i]);
+                points[i] = new ModelPoint(vertex * 2, reader.Normals[i], reader.TexCoords[i]);
                 i++;
             }
-            return new Model(points, sphereReader.Indices, ShapeMode.Bomb);
+            return new Model(points, reader.Indices, ShapeMode.Bomb);
         }
 
         public static Model CreateWall()
         {
-            ModelPoint[] points = new ModelPoint[boxReader.Vertices.Length];
+            _3dsReader reader = _3dsReader.GetReaderByFilename(Wall.model.fileName, Wall.model.roughNormals);
+            ModelPoint[] points = new ModelPoint[reader.Vertices.Length];
             int i = 0;
-            foreach (Vector3 vertex in boxReader.Vertices)
+            foreach (Vector3 vertex in reader.Vertices)
             {
-                points[i] = new ModelPoint(vertex * 2, boxReader.Normals[i]);
+                points[i] = new ModelPoint(vertex * 2, reader.Normals[i], reader.TexCoords[i]);
                 i++;
             }
-            return new Model(points, boxReader.Indices, ShapeMode.Wall);
+            return new Model(points, reader.Indices, ShapeMode.Wall);
         }
 
         public static Model CreateFlat(int width, int height)
@@ -124,10 +136,10 @@ namespace Client
             {
                 for (int z = -height / 2 * 2; z <= height; z += 2)
                 {
-                    points.Add(new ModelPoint((x - 1, y, z - 1), (0, 1, 0)));
-                    points.Add(new ModelPoint((x - 1, y, z + 1), (0, 1, 0)));
-                    points.Add(new ModelPoint((x + 1, y, z - 1), (0, 1, 0)));
-                    points.Add(new ModelPoint((x + 1, y, z + 1), (0, 1, 0)));
+                    points.Add(new ModelPoint((x - 1, y, z - 1), (0, 1, 0), (0, 0)));
+                    points.Add(new ModelPoint((x - 1, y, z + 1), (0, 1, 0), (0, 1)));
+                    points.Add(new ModelPoint((x + 1, y, z - 1), (0, 1, 0), (1, 0)));
+                    points.Add(new ModelPoint((x + 1, y, z + 1), (0, 1, 0), (1, 1)));
                     indices.AddRange(new ushort[6] { startIndex, (ushort)(startIndex + 1), (ushort)(startIndex + 2), (ushort)(startIndex + 2), (ushort)(startIndex + 1), (ushort)(startIndex + 3) });
                     startIndex += 4;
                 }
@@ -139,12 +151,15 @@ namespace Client
         {
             GL.EnableClientState(ArrayCap.VertexArray);
             GL.EnableClientState(ArrayCap.NormalArray);
+            GL.EnableClientState(ArrayCap.TextureCoordArray);
+            GL.ClientActiveTexture(TextureUnit.Texture0);
             GL.BindBuffer(BufferTarget.ArrayBuffer, IdVertexBuffer);
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, IdIndexBuffer);
             GL.EnableVertexAttribArray(0);
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, ModelPoint.Size(), ModelPoint.CoordinatesOffset());
             GL.NormalPointer(NormalPointerType.Float, ModelPoint.Size(), ModelPoint.NormalsOffset());
-            switch (Model.OutputMode)
+            GL.TexCoordPointer(2, TexCoordPointerType.Float, ModelPoint.Size(), ModelPoint.TexCoordsOffset());
+            switch (OutputMode)
             {
                 case OutputMode.Triangles:
                     GL.DrawElements(PrimitiveType.Triangles, indices.Length, DrawElementsType.UnsignedShort, 0);
@@ -158,6 +173,7 @@ namespace Client
             }
             GL.DisableClientState(ArrayCap.VertexArray);
             GL.DisableClientState(ArrayCap.NormalArray);
+            GL.DisableClientState(ArrayCap.TextureCoordArray);
         }
 
         private void InitializeVBO()

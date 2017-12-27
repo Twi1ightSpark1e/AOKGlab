@@ -279,3 +279,6 @@ __pycache__/
 /Server/bin/Debug/Newtonsoft.Json.dll
 /Server/bin/Debug/map_latest.txt
 /Server/bin/Debug
+/Client/bin/Debug/Client.vshost.exe.manifest
+/Client/bin/Debug/Client.vshost.exe.config
+/Client/bin/Debug/Client.vshost.exe

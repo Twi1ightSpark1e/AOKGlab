@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Client.Materials;
+
+using System;
 
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
@@ -17,7 +19,7 @@ namespace Client
         public float MoveProgress { get; private set; } // прогресс движения; изменяется от 0 - начальная точка, до 1 - конечная точка
         // внешний вид объекта
         public Model CurrentModel { get; set; }
-        public Material CurrentMaterial { get; set; }
+        public IMaterial CurrentMaterial { get; set; }
         public float Speed => 4f; // скорость передвижения объекта
         // позиция графического объекта
         private (int x, int z) position;
@@ -62,7 +64,7 @@ namespace Client
         private int xLength, zLength;
         private Matrix4 modelMatrix;
 
-        public GraphicObject(Model model, Material material, (int x, int y) position, (int xMax, int yMax) maxPosition, float angle)
+        public GraphicObject(Model model, IMaterial material, (int x, int y) position, (int xMax, int yMax) maxPosition, float angle)
         {
             CurrentModel = model;
             CurrentMaterial = material;

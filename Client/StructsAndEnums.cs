@@ -56,4 +56,17 @@ namespace Client
     {
         Triangles, Lines
     }
+
+    enum FilterMode
+    {
+        Nearest,
+        Bilinear,
+        BilinearMipmap,
+        Trilinear,
+        Anisotropic2,
+        Anisotropic4,
+        Anisotropic8,
+        Anisotropic16,
+        Anisotropic32
+    }
 }

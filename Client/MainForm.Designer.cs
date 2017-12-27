@@ -34,6 +34,7 @@
             this.connectButton = new System.Windows.Forms.Button();
             this.cullFaceModeButton = new System.Windows.Forms.Button();
             this.lightingButton = new System.Windows.Forms.Button();
+            this.filterLevelButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // changeModelButton
@@ -105,11 +106,25 @@
             this.lightingButton.UseVisualStyleBackColor = true;
             this.lightingButton.Click += new System.EventHandler(this.lightingButton_Click);
             // 
+            // filterLevelButton
+            // 
+            this.filterLevelButton.Anchor = System.Windows.Forms.AnchorStyles.Right;
+            this.filterLevelButton.Enabled = false;
+            this.filterLevelButton.Location = new System.Drawing.Point(615, 319);
+            this.filterLevelButton.Name = "filterLevelButton";
+            this.filterLevelButton.Size = new System.Drawing.Size(114, 36);
+            this.filterLevelButton.TabIndex = 10;
+            this.filterLevelButton.TabStop = false;
+            this.filterLevelButton.Text = "Следующий режим фильтрации";
+            this.filterLevelButton.UseVisualStyleBackColor = true;
+            this.filterLevelButton.Click += new System.EventHandler(this.filterLevelButton_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(741, 498);
+            this.Controls.Add(this.filterLevelButton);
             this.Controls.Add(this.lightingButton);
             this.Controls.Add(this.cullFaceModeButton);
             this.Controls.Add(this.connectButton);
@@ -134,6 +149,7 @@
         private System.Windows.Forms.Button connectButton;
         private System.Windows.Forms.Button cullFaceModeButton;
         private System.Windows.Forms.Button lightingButton;
+        private System.Windows.Forms.Button filterLevelButton;
     }
 }
 

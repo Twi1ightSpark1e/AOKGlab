@@ -11,6 +11,8 @@ using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
 
+using Client.Materials;
+
 namespace Client
 {
     public partial class MainForm : Form
@@ -29,7 +31,7 @@ namespace Client
             {
                 connected = value;
                 addressTextBox.Enabled = !connected;
-                changeModelButton.Enabled = cullFaceModeButton.Enabled = lightingButton.Enabled = connected;
+                changeModelButton.Enabled = cullFaceModeButton.Enabled = lightingButton.Enabled = filterLevelButton.Enabled = connected;
                 connectButton.Click -= connectButton_Click;
                 connectButton.Click -= disconnectButton_Click;
                 if (value)
@@ -70,7 +72,7 @@ namespace Client
         private static List<GraphicObject> graphicObjects;
         internal static List<GraphicObject> Scene => graphicObjects;
 
-        private static List<Material> materials;
+        private static List<IMaterial> materials;
         private Model playerModel, bombModel, lightBarrierModel, heavyBarrierModel, wallModel, flatModel;
         private int fieldRowsCount, fieldColumnsCount;
         private Light light;
@@ -112,7 +114,7 @@ namespace Client
             LastInstance = this;
             InitializeComponent();
 
-            glControl1 = new GLControl(new OpenTK.Graphics.GraphicsMode(new OpenTK.Graphics.ColorFormat(32), 24, 0, 8));
+            glControl1 = new GLControl(new OpenTK.Graphics.GraphicsMode(new OpenTK.Graphics.ColorFormat(32), 24, 0, 16));
             glControl1.BackColor = System.Drawing.Color.Black;
             glControl1.Location = new System.Drawing.Point(12, 12);
             glControl1.Name = "glControl1";
@@ -148,12 +150,12 @@ namespace Client
 
         private void glControl1_Resize(object sender, EventArgs e)
         {
-            GL.Viewport(glControl1.Location.X, glControl1.Location.Y, glControl1.Width, glControl1.Height);
+            GL.Viewport(0, 0, glControl1.Width, glControl1.Height);
             GL.MatrixMode(MatrixMode.Projection);
             GL.LoadIdentity();
-            float aspect = glControl1.Width / glControl1.Height;
+            float aspect = (float)glControl1.Width / glControl1.Height;
             if (aspect == 0)
-                aspect = glControl1.Height / glControl1.Width;
+                aspect = (float)glControl1.Width / glControl1.Height;
             Matrix4 perspective = Matrix4.CreatePerspectiveFieldOfView(0.785398f, aspect, 0.01f, 5000.0f); //0,785398 это 45 градусов в радианах
             GL.LoadMatrix(ref perspective);
         }
@@ -175,6 +177,8 @@ namespace Client
                 //Отображаем все элементы
                 for (int i = 0; i < graphicObjects.Count; i++)
                     graphicObjects[i].Show();
+                //Выключаем  текстурирование перед выводом спрайтов
+                Texture.Disable();
                 //Рисуем иконку ВУЗа
                 authorsLogo.Draw(glControl1.Width - authorsLogo.Width, glControl1.Height - authorsLogo.Height);
                 //Иконка бомбы и её прогресс
@@ -502,33 +506,37 @@ namespace Client
             ChangeCullingFaces(true);
             Model.OutputMode = OutputMode.Triangles;
 
+            Configuration.Configuration.Load("configuration.json");
+            
+            // Модели
             lightBarrierModel = Model.CreateLightBarrier();
             heavyBarrierModel = Model.CreateHeavyBarrier();
             playerModel = Model.CreatePlayer();
             bombModel = Model.CreateBomb();
             wallModel = Model.CreateWall();
-            materials = new List<Material>()
+            // Материалы
+            materials = new List<IMaterial>()
             {
-                Material.CreateLightBarrier(),
-                Material.CreateHeavyBarrier(),
-                Material.CreatePlayer(),
-                Material.CreateWall(),
-                Material.CreateFlat(),
-                Material.CreateBomb()
+                PhongTexturedMaterial.CreateLightBarrier(),
+                PhongTexturedMaterial.CreateHeavyBarrier(),
+                PhongMaterial.CreatePlayer(),
+                PhongTexturedMaterial.CreateWall(),
+                PhongTexturedMaterial.CreateFlat(),
+                PhongTexturedMaterial.CreateBomb()
             };
             light = new Light()
             {
-                Position = new Vector3(10, 10, 10),
-                Ambient = new Vector3(1, 1, 1),
-                Diffuse = new Vector3(.7f, .7f, .7f),
-                Specular = new Vector3(.5f, .5f, .5f),
+                Position = new Vector3(0, 6, -10),
+                Ambient = new Vector3(1f, 1f, 1f),
+                Diffuse = new Vector3(1f, 1f, 1f),
+                Specular = new Vector3(1f, 1f, 1f),
                 LightName = LightName.Light0
             };
             Light.LightMode = LightMode.All;
 
-            authorsLogo = new Sprite("sprites/authors.png");
-            bombIcon = new Sprite("sprites/bomb.ico");
-            barIcon = new Sprite("sprites/bar.bmp");
+            authorsLogo = new Sprite("sprites/authors.png", true);
+            bombIcon = new Sprite("sprites/bomb.ico", true);
+            barIcon = new Sprite("sprites/bar.bmp", true);
 
             foreach (Control control in this.Controls)
             {
@@ -542,6 +550,13 @@ namespace Client
         {
             int temp = (int)Model.OutputMode;
             Model.OutputMode = (OutputMode)(++temp % Enum.GetNames(typeof(OutputMode)).Length);
+            SetText();
+        }
+
+        private void filterLevelButton_Click(object sender, EventArgs e)
+        {
+            int filter = (int)Texture.FilterMode;
+            Texture.FilterMode = (FilterMode)((++filter) % Enum.GetNames(typeof(FilterMode)).Length);
             SetText();
         }
 
@@ -602,7 +617,7 @@ namespace Client
                     lightMode = "Спекулярное освещение";
                     break;
             }
-            Text = $"FPS: {frameRate.ToString("N2")}; {outputMode}; {cullingMode}; {lightMode}";
+            Text = $"FPS: {frameRate.ToString("N2")}; {outputMode}; {cullingMode}; {lightMode}; {Texture.FilterMode.ToString()}";
         }
 
         void control_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)

@@ -14,7 +14,7 @@ namespace Client
         public int PixelUnpackBuffer { get; private set; } // PixelBufferObject ID
         public const float ImageHeight = 64f; // высота выводимого спрайта - каждый спрайт уменьшается до этих размеров
 
-        public Sprite(string filename)
+        public Sprite(string filename, bool isTexture)
         {
             Bitmap bm;
             if (File.Exists(filename))
@@ -25,7 +25,8 @@ namespace Client
                     bm = new Bitmap(new Icon(filename, new Size(64, 64)).ToBitmap());
                 else throw new FormatException("Данный тип файла не поддерживается");
                 // создаем превью спрайта с заданным в ImageHeight размером
-                bm = new Bitmap(bm.GetThumbnailImage((int)(bm.Width / (bm.Height / ImageHeight)), 64, new Image.GetThumbnailImageAbort(new Func<bool>(() => { return false; })), IntPtr.Zero));
+                if (isTexture)
+                    bm = new Bitmap(bm.GetThumbnailImage((int)(bm.Width / (bm.Height / ImageHeight)), 64, new Image.GetThumbnailImageAbort(new Func<bool>(() => { return false; })), IntPtr.Zero));
             }
             else throw new FileNotFoundException("Файл не найден");
             bm.RotateFlip(RotateFlipType.Rotate180FlipX); // развернуть изображение для нормального его вывода
@@ -45,10 +46,13 @@ namespace Client
                     Pixels[(Width * h + w) * 4 + 3] = pixel.A;
                 }
             }
-            // заполняем PixelBufferObject
-            PixelUnpackBuffer = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, PixelUnpackBuffer);
-            GL.BufferData(BufferTarget.PixelUnpackBuffer, Pixels.Length, Pixels, BufferUsageHint.StaticDraw);
+            if (isTexture)
+            {
+                // заполняем PixelBufferObject
+                PixelUnpackBuffer = GL.GenBuffer();
+                GL.BindBuffer(BufferTarget.PixelUnpackBuffer, PixelUnpackBuffer);
+                GL.BufferData(BufferTarget.PixelUnpackBuffer, Pixels.Length, Pixels, BufferUsageHint.StaticDraw);
+            }
         }
 
         public void Draw(int x, int y)
