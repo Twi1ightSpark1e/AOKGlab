@@ -72,7 +72,8 @@ namespace Client
         private static List<GraphicObject> graphicObjects;
         internal static List<GraphicObject> Scene => graphicObjects;
 
-        private static List<IMaterial> materials;
+        //private static List<IMaterial> materials;
+        private IMaterial playerMaterial, bombMaterial, lightBarrierMaterial, heavyBarrierMaterial, wallMaterial, flatMaterial;
         private Model playerModel, bombModel, lightBarrierModel, heavyBarrierModel, wallModel, flatModel;
         private int fieldRowsCount, fieldColumnsCount;
         private Light light;
@@ -199,19 +200,19 @@ namespace Client
 
         private void CreateField(MapUnit[] units, Model lightBarrierModel, Model heavyBarrierModel, Model wallModel, Model flatModel)
         {
-            graphicObjects.Add(new GraphicObject(flatModel, materials[4], (0, 0), (0, 0), 0)); //плоская модель
+            graphicObjects.Add(new GraphicObject(flatModel, flatMaterial, (0, 0), (0, 0), 0)); //плоская модель
             foreach (MapUnit unit in units)
             {
                 switch ((ShapeMode)unit.value)
                 {
                     case ShapeMode.LightBarrier:
-                        graphicObjects.Add(new GraphicObject(lightBarrierModel, materials[0], (unit.x, unit.z), (fieldRowsCount, fieldColumnsCount), 0));
+                        graphicObjects.Add(new GraphicObject(lightBarrierModel, lightBarrierMaterial, (unit.x, unit.z), (fieldRowsCount, fieldColumnsCount), 0));
                         break;
                     case ShapeMode.HeavyBarrier:
-                        graphicObjects.Add(new GraphicObject(heavyBarrierModel, materials[1], (unit.x, unit.z), (fieldRowsCount, fieldColumnsCount), 0));
+                        graphicObjects.Add(new GraphicObject(heavyBarrierModel, heavyBarrierMaterial, (unit.x, unit.z), (fieldRowsCount, fieldColumnsCount), 0));
                         break;
                     case ShapeMode.Wall:
-                        graphicObjects.Add(new GraphicObject(wallModel, materials[3], (unit.x, unit.z), (fieldRowsCount, fieldColumnsCount), 0));
+                        graphicObjects.Add(new GraphicObject(wallModel, wallMaterial, (unit.x, unit.z), (fieldRowsCount, fieldColumnsCount), 0));
                         break;
                 }
             }
@@ -219,7 +220,7 @@ namespace Client
 
         private void CreatePlayers()
         {
-            GraphicObject playerObject = new GraphicObject(playerModel, materials[2], players[0], (fieldRowsCount, fieldColumnsCount), 0);
+            GraphicObject playerObject = new GraphicObject(playerModel, playerMaterial, players[0], (fieldRowsCount, fieldColumnsCount), 0);
             playerObject.OnSimulationFinished += () =>
             {
                 waitUntilResultReceive = false;
@@ -228,7 +229,7 @@ namespace Client
             playerObjects.Add(playerObject);
             for (int i = 1; i < players.Count; i++)
             {
-                var enemyObject = new GraphicObject(playerModel, materials[2], players.ElementAt(i), (fieldRowsCount, fieldColumnsCount), 0);
+                var enemyObject = new GraphicObject(playerModel, playerMaterial, players.ElementAt(i), (fieldRowsCount, fieldColumnsCount), 0);
                 graphicObjects.Insert(0, enemyObject);
                 playerObjects.Add(enemyObject);
             }
@@ -257,7 +258,7 @@ namespace Client
             var coordinates = message.Remove(0, 10).Split('(', ')').ToList().Where((str) => str != string.Empty);
             string[] xz = coordinates.ElementAt(0).Split(';');
             players.Add((int.Parse(xz[0]), int.Parse(xz[1])));
-            var enemyObject = new GraphicObject(playerModel, materials[2], (int.Parse(xz[0]), int.Parse(xz[1])), (fieldRowsCount, fieldColumnsCount), 0);
+            var enemyObject = new GraphicObject(playerModel, playerMaterial, (int.Parse(xz[0]), int.Parse(xz[1])), (fieldRowsCount, fieldColumnsCount), 0);
             graphicObjects.Add(enemyObject);
             playerObjects.Add(enemyObject);
         }
@@ -347,7 +348,7 @@ namespace Client
             string[] radiusTime = splitted[1].Split(';');
             int bombTriggerRadius = int.Parse(radiusTime[0]);
             float bombTriggerTime = float.Parse(radiusTime[1]);
-            GraphicObject bombObject = new GraphicObject(bombModel, materials[5], ((int.Parse(xz[0]), int.Parse(xz[1]))), (fieldColumnsCount, fieldRowsCount), 0);
+            GraphicObject bombObject = new GraphicObject(bombModel, bombMaterial, ((int.Parse(xz[0]), int.Parse(xz[1]))), (fieldColumnsCount, fieldRowsCount), 0);
             graphicObjects.Add(bombObject);
             Thread bombTriggerThread = new Thread((triggerTime) =>
             {
@@ -501,12 +502,18 @@ namespace Client
 
         private void glControl1_Load(object sender, EventArgs e)
         {
+            if (new SelectConfigurationForm().ShowDialog() == DialogResult.Cancel)
+            {
+                Application.Exit();
+                return;
+            }
+
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Lighting);
             ChangeCullingFaces(true);
             Model.OutputMode = OutputMode.Triangles;
 
-            Configuration.Configuration.Load("configuration.json");
+            //Configuration.Configuration.Load("configuration.json");
             
             // Модели
             lightBarrierModel = Model.CreateLightBarrier();
@@ -515,15 +522,12 @@ namespace Client
             bombModel = Model.CreateBomb();
             wallModel = Model.CreateWall();
             // Материалы
-            materials = new List<IMaterial>()
-            {
-                PhongTexturedMaterial.CreateLightBarrier(),
-                PhongTexturedMaterial.CreateHeavyBarrier(),
-                PhongMaterial.CreatePlayer(),
-                PhongTexturedMaterial.CreateWall(),
-                PhongTexturedMaterial.CreateFlat(),
-                PhongTexturedMaterial.CreateBomb()
-            };
+            lightBarrierMaterial = PhongTexturedMaterial.CreateLightBarrier();
+            heavyBarrierMaterial = PhongTexturedMaterial.CreateHeavyBarrier();
+            playerMaterial = PhongMaterial.CreatePlayer();
+            wallMaterial = PhongTexturedMaterial.CreateWall();
+            flatMaterial = PhongTexturedMaterial.CreateFlat();
+            bombMaterial = PhongTexturedMaterial.CreateBomb();
             light = new Light()
             {
                 Position = new Vector3(0, 6, -10),

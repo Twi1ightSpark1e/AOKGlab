@@ -26,7 +26,7 @@ namespace Client.Materials
                 Emission = parentMaterial.Emission,
                 Shininess = parentMaterial.Shininess,
                 Specular = parentMaterial.Specular,
-                Texture = Texture.GetTextureByName(Wall.material.texture.fileName)
+                Texture = Texture.GetTextureByName(Wall.material.texture?.fileName)
             };
         }
 
@@ -40,7 +40,7 @@ namespace Client.Materials
                 Emission = parentMaterial.Emission,
                 Shininess = parentMaterial.Shininess,
                 Specular = parentMaterial.Specular,
-                Texture = Texture.GetTextureByName(LightObject.material.texture.fileName)
+                Texture = Texture.GetTextureByName(LightObject.material.texture?.fileName)
             };
         }
 
@@ -54,7 +54,7 @@ namespace Client.Materials
                 Emission = parentMaterial.Emission,
                 Shininess = parentMaterial.Shininess,
                 Specular = parentMaterial.Specular,
-                Texture = Texture.GetTextureByName(HeavyObject.material.texture.fileName)
+                Texture = Texture.GetTextureByName(HeavyObject.material.texture?.fileName)
             };
         }
 
@@ -68,7 +68,7 @@ namespace Client.Materials
                 Emission = parentMaterial.Emission,
                 Shininess = parentMaterial.Shininess,
                 Specular = parentMaterial.Specular,
-                Texture = Texture.GetTextureByName(Flat.material.texture.fileName)
+                Texture = Texture.GetTextureByName(Flat.material.texture?.fileName)
             };
         }
 
@@ -82,7 +82,7 @@ namespace Client.Materials
                 Emission = parentMaterial.Emission,
                 Shininess = parentMaterial.Shininess,
                 Specular = parentMaterial.Specular,
-                Texture = Texture.GetTextureByName(Bomb.material.texture.fileName)
+                Texture = Texture.GetTextureByName(Bomb.material.texture?.fileName)
             };
         }
         #endregion

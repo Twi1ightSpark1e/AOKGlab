@@ -92,6 +92,8 @@ namespace Client
 
         public static Texture GetTextureByName(string name)
         {
+            if (name == null)
+                return null;
             var search = textures.Where((texture) => texture.filename == name);
             if (search.Count() == 0)
             {

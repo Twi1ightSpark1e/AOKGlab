@@ -4,6 +4,7 @@ using System;
 
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
+using System.Collections.Generic;
 
 namespace Client
 {
@@ -64,6 +65,8 @@ namespace Client
         private int xLength, zLength;
         private Matrix4 modelMatrix;
 
+        private Queue<MoveDirection> moveQueue;
+
         public GraphicObject(Model model, IMaterial material, (int x, int y) position, (int xMax, int yMax) maxPosition, float angle)
         {
             CurrentModel = model;
@@ -72,47 +75,54 @@ namespace Client
             xLength = maxPosition.xMax;
             zLength = maxPosition.yMax;
             Position = (position.x, position.y);
+            moveQueue = new Queue<MoveDirection>();
         }
 
         public void Move(MoveDirection direction)
         {
-            if (!IsMoving)
+            if (moveQueue.Count == 0 && currentMoveDirection == MoveDirection.None)
             {
-                MoveProgress = 0;
-                currentMoveDirection = direction;
-                // получаем координаты места, в котором окажется объект по окончанию движения
-                switch (currentMoveDirection)
+                SetMoving(direction);
+            }
+            else moveQueue.Enqueue(direction);
+        }
+
+        private void SetMoving(MoveDirection direction)
+        {
+            MoveProgress = 0;
+            currentMoveDirection = direction;
+            // получаем координаты места, в котором окажется объект по окончанию движения
+            switch (currentMoveDirection)
+            {
+                case MoveDirection.Up:
+                case MoveDirection.Down:
+                    position = (position.x, position.z + Math.Sign((sbyte)currentMoveDirection));
+                    break;
+                case MoveDirection.Left:
+                case MoveDirection.Right:
+                    position = (position.x + Math.Sign((sbyte)currentMoveDirection), position.z);
+                    break;
+            }
+            // находим объект по полученным координатам
+            foreach (GraphicObject graphicObject in MainForm.Scene)
+            {
+                if (graphicObject.Position.x == position.x &&
+                    graphicObject.Position.z == position.z &&
+                    graphicObject.CurrentModel.Shape != ShapeMode.Player)
                 {
-                    case MoveDirection.Up:
-                    case MoveDirection.Down:
-                        position = (position.x, position.z + Math.Sign((sbyte)currentMoveDirection));
-                        break;
-                    case MoveDirection.Left:
-                    case MoveDirection.Right:
-                        position = (position.x + Math.Sign((sbyte)currentMoveDirection), position.z);
-                        break;
-                }
-                // находим объект по полученным координатам
-                foreach (GraphicObject graphicObject in MainForm.Scene)
-                {
-                    if (graphicObject.Position.x == position.x &&
-                        graphicObject.Position.z == position.z &&
-                        graphicObject.CurrentModel.Shape != ShapeMode.Player)
+                    nextObject = graphicObject;
+                    switch (currentMoveDirection)
                     {
-                        nextObject = graphicObject;
-                        switch (currentMoveDirection)
-                        {
-                            case MoveDirection.Up:
-                            case MoveDirection.Down:
-                                nextObject.Position = (position.x, position.z + Math.Sign((sbyte)currentMoveDirection));
-                                break;
-                            case MoveDirection.Left:
-                            case MoveDirection.Right:
-                                nextObject.Position = (position.x + Math.Sign((sbyte)currentMoveDirection), position.z);
-                                break;
-                        }
-                        break;
+                        case MoveDirection.Up:
+                        case MoveDirection.Down:
+                            nextObject.Position = (position.x, position.z + Math.Sign((sbyte)currentMoveDirection));
+                            break;
+                        case MoveDirection.Left:
+                        case MoveDirection.Right:
+                            nextObject.Position = (position.x + Math.Sign((sbyte)currentMoveDirection), position.z);
+                            break;
                     }
+                    break;
                 }
             }
         }
@@ -154,6 +164,10 @@ namespace Client
                     }
                     currentMoveDirection = MoveDirection.None;
                     OnSimulationFinished?.Invoke();
+                    if (moveQueue.Count != 0)
+                    {
+                        SetMoving(moveQueue.Dequeue());
+                    }
                 }
             }
         }
