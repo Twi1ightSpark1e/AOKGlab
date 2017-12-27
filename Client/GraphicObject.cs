@@ -108,7 +108,8 @@ namespace Client
             {
                 if (graphicObject.Position.x == position.x &&
                     graphicObject.Position.z == position.z &&
-                    graphicObject.CurrentModel.Shape != ShapeMode.Player)
+                    graphicObject.CurrentModel.Shape != ShapeMode.Player &&
+                    graphicObject.CurrentModel.Shape != ShapeMode.Decal)
                 {
                     nextObject = graphicObject;
                     switch (currentMoveDirection)

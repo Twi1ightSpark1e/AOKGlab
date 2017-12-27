@@ -23,9 +23,6 @@ namespace Client.Materials
         {
             return new PhongMaterial()
             {
-                //Ambient = new Vector3(.5f, .5f, .5f),
-                //Diffuse = new Vector3(1f, 1f, 1f),
-                //Shininess = 1
                 Ambient = Wall.material.parameters.AmbientVector,
                 Diffuse = Wall.material.parameters.DiffuseVector,
                 Emission = Wall.material.parameters.EmissionVector,
@@ -38,9 +35,6 @@ namespace Client.Materials
         {
             return new PhongMaterial()
             {
-                //Ambient = new Vector3(0, .55f, .8f),
-                //Diffuse = new Vector3(.4f, .4f, .4f),
-                //Emission = new Vector3(.05f, .05f, .05f)
                 Ambient = Player.material.parameters.AmbientVector,
                 Diffuse = Player.material.parameters.DiffuseVector,
                 Emission = Player.material.parameters.EmissionVector,
@@ -53,8 +47,6 @@ namespace Client.Materials
         {
             return new PhongMaterial()
             {
-                //Specular = new Vector3(.5f, .5f, .5f),
-                //Shininess = 7f
                 Ambient = Bomb.material.parameters.AmbientVector,
                 Diffuse = Bomb.material.parameters.DiffuseVector,
                 Emission = Bomb.material.parameters.EmissionVector,
@@ -67,9 +59,6 @@ namespace Client.Materials
         {
             return new PhongMaterial()
             {
-                //Ambient = new Vector3(.8f, .8f, .8f),
-                //Diffuse = new Vector3(.4f, .4f, .4f),
-                //Shininess = 1
                 Ambient = LightObject.material.parameters.AmbientVector,
                 Diffuse = LightObject.material.parameters.DiffuseVector,
                 Emission = LightObject.material.parameters.EmissionVector,
@@ -82,9 +71,6 @@ namespace Client.Materials
         {
             return new PhongMaterial()
             {
-                //Ambient = new Vector3(.51f, .51f, .51f),
-                //Diffuse = new Vector3(.85f, .85f, .85f),
-                //Shininess = 10
                 Ambient = HeavyObject.material.parameters.AmbientVector,
                 Diffuse = HeavyObject.material.parameters.DiffuseVector,
                 Emission = HeavyObject.material.parameters.EmissionVector,
@@ -97,14 +83,23 @@ namespace Client.Materials
         {
             return new PhongMaterial()
             {
-                //Ambient = new Vector3(.27f, .27f, .27f),
-                //Diffuse = new Vector3(.9f, .9f, .9f),
-                //Shininess = 1
                 Ambient = Flat.material.parameters.AmbientVector,
                 Diffuse = Flat.material.parameters.DiffuseVector,
                 Emission = Flat.material.parameters.EmissionVector,
                 Specular = Flat.material.parameters.SpecularVector,
                 Shininess = Flat.material.parameters.shininess
+            };
+        }
+
+        public static PhongMaterial CreateExplosion()
+        {
+            return new PhongMaterial()
+            {
+                Ambient = Explosion.material.parameters.AmbientVector,
+                Diffuse = Explosion.material.parameters.DiffuseVector,
+                Emission = Explosion.material.parameters.EmissionVector,
+                Specular = Explosion.material.parameters.SpecularVector,
+                Shininess = Explosion.material.parameters.shininess
             };
         }
         #endregion

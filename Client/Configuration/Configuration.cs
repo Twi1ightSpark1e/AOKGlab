@@ -9,8 +9,8 @@ namespace Client.Configuration
 {
     class Configuration
     {
-        public ConfigurationObject lightObject, heavyObject, wall, player, flat, bomb;
-        public static ConfigurationObject LightObject, HeavyObject, Wall, Player, Flat, Bomb;
+        public ConfigurationObject lightObject, heavyObject, wall, player, flat, bomb, explosion;
+        public static ConfigurationObject LightObject, HeavyObject, Wall, Player, Flat, Bomb, Explosion;
 
         public static void Load(string configFileName)
         {
@@ -21,6 +21,7 @@ namespace Client.Configuration
             Player = config.player;
             Flat = config.flat;
             Bomb = config.bomb;
+            Explosion = config.explosion;
         }
     }
 }

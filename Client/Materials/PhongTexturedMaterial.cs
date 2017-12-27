@@ -85,6 +85,20 @@ namespace Client.Materials
                 Texture = Texture.GetTextureByName(Bomb.material.texture?.fileName)
             };
         }
+
+        new public static PhongTexturedMaterial CreateExplosion()
+        {
+            PhongMaterial parentMaterial = PhongMaterial.CreateExplosion();
+            return new PhongTexturedMaterial()
+            {
+                Ambient = parentMaterial.Ambient,
+                Diffuse = parentMaterial.Diffuse,
+                Emission = parentMaterial.Emission,
+                Shininess = parentMaterial.Shininess,
+                Specular = parentMaterial.Specular,
+                Texture = Texture.GetTextureByName(Explosion.material.texture?.fileName)
+            };
+        }
         #endregion
 
         public override void Apply()

@@ -48,7 +48,7 @@ namespace Client
     // фигуры
     enum ShapeMode
     {
-        Bomb = -2, Player, Empty, LightBarrier, HeavyBarrier, Wall
+        Decal = -3, Bomb, Player, Empty, LightBarrier, HeavyBarrier, Wall
     }
 
     // режим вывода
@@ -68,5 +68,12 @@ namespace Client
         Anisotropic8,
         Anisotropic16,
         Anisotropic32
+    }
+
+    enum SoundType
+    {
+        Ambient,
+        Death,
+        Explosion
     }
 }

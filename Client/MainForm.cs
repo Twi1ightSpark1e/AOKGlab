@@ -68,13 +68,15 @@ namespace Client
                 LastInstance.glControl1.Invalidate();
             }
         }
-        
+
+        private static MapUnit[] units;
+        private static List<GraphicObject> explosions = new List<GraphicObject>();
         private static List<GraphicObject> graphicObjects;
         internal static List<GraphicObject> Scene => graphicObjects;
 
         //private static List<IMaterial> materials;
-        private IMaterial playerMaterial, bombMaterial, lightBarrierMaterial, heavyBarrierMaterial, wallMaterial, flatMaterial;
-        private Model playerModel, bombModel, lightBarrierModel, heavyBarrierModel, wallModel, flatModel;
+        private IMaterial playerMaterial, bombMaterial, lightBarrierMaterial, heavyBarrierMaterial, wallMaterial, flatMaterial, explosionMaterial;
+        private Model playerModel, bombModel, lightBarrierModel, heavyBarrierModel, wallModel, flatModel, explosionModel;
         private int fieldRowsCount, fieldColumnsCount;
         private Light light;
         private static Camera camera;
@@ -178,6 +180,15 @@ namespace Client
                 //Отображаем все элементы
                 for (int i = 0; i < graphicObjects.Count; i++)
                     graphicObjects[i].Show();
+                //Рисуем следы от взрывов
+                GL.Enable(EnableCap.Blend);
+                GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
+                GL.Enable(EnableCap.PolygonOffsetFill);
+                GL.PolygonOffset(-1, -1);
+                for (int i = 0; i < explosions.Count; i++)
+                    explosions[i].Show();
+                GL.Disable(EnableCap.PolygonOffsetFill);
+                GL.Disable(EnableCap.Blend);
                 //Выключаем  текстурирование перед выводом спрайтов
                 Texture.Disable();
                 //Рисуем иконку ВУЗа
@@ -198,7 +209,7 @@ namespace Client
             }
         }
 
-        private void CreateField(MapUnit[] units, Model lightBarrierModel, Model heavyBarrierModel, Model wallModel, Model flatModel)
+        private void CreateField()
         {
             graphicObjects.Add(new GraphicObject(flatModel, flatMaterial, (0, 0), (0, 0), 0)); //плоская модель
             foreach (MapUnit unit in units)
@@ -298,14 +309,14 @@ namespace Client
         private void FieldHandler(string message)
         {
             graphicObjects = new List<GraphicObject>();
-            MapUnit[] units = JsonConvert.DeserializeObject<MapUnit[]>(message.Remove(0, 5));
+            units = JsonConvert.DeserializeObject<MapUnit[]>(message.Remove(0, 5));
             fieldColumnsCount = units.Max((unit) => unit.x) + 1;
             fieldRowsCount = units.Max((unit) => unit.z) + 1;
             Invoke((MethodInvoker)delegate
             {
                 flatModel = Model.CreateFlat(fieldRowsCount, fieldColumnsCount);
             });
-            CreateField(units, lightBarrierModel, heavyBarrierModel, wallModel, flatModel);
+            CreateField();
             CreatePlayers();
             if (!Connected)
                 Invoke((MethodInvoker)delegate
@@ -320,6 +331,7 @@ namespace Client
             {
                 Connected = false;
                 graphicObjects.Clear();
+                explosions.Clear();
             });
         }
 
@@ -371,6 +383,7 @@ namespace Client
                     }
                 }
                 graphicObjects.Remove(bombObject);
+                explosions.Add(new GraphicObject(explosionModel, explosionMaterial, (int.Parse(xz[0]), int.Parse(xz[1])), (fieldColumnsCount, fieldRowsCount), 0));
                 bombHasBeenPlanted = false;
             });
             bombTriggerThread.Start(bombTriggerTime);
@@ -393,6 +406,7 @@ namespace Client
             addressTextBox.Enabled = connectButton.Enabled = false;
             players.Clear();
             playerObjects.Clear();
+            explosions.Clear();
             clientSocket = new ClientSocket(addressTextBox.Text, 4115);
             clientSocket.OnDisconnect += (reason) =>
             {
@@ -450,6 +464,7 @@ namespace Client
                 dirs |= (state.IsKeyDown(Key.Minus) || state.IsKeyDown(Key.KeypadMinus)) ? Directions.Backward : Directions.None;
                 camera.CurrentDirection = dirs;
                 camera.Simulate(millisecondsElapsed / 1000);
+
                 int move = 0;
                 if (state.IsKeyDown(Key.W))
                     move = (int)(keyHandlers['W']());
@@ -502,7 +517,7 @@ namespace Client
 
         private void glControl1_Load(object sender, EventArgs e)
         {
-            if (new SelectConfigurationForm().ShowDialog() == DialogResult.Cancel)
+            if (new SelectConfigurationForm().ShowDialog() != DialogResult.OK)
             {
                 Application.Exit();
                 return;
@@ -512,15 +527,14 @@ namespace Client
             GL.Enable(EnableCap.Lighting);
             ChangeCullingFaces(true);
             Model.OutputMode = OutputMode.Triangles;
-
-            //Configuration.Configuration.Load("configuration.json");
-            
+                        
             // Модели
             lightBarrierModel = Model.CreateLightBarrier();
             heavyBarrierModel = Model.CreateHeavyBarrier();
             playerModel = Model.CreatePlayer();
             bombModel = Model.CreateBomb();
             wallModel = Model.CreateWall();
+            explosionModel = Model.CreateExplosion();
             // Материалы
             lightBarrierMaterial = PhongTexturedMaterial.CreateLightBarrier();
             heavyBarrierMaterial = PhongTexturedMaterial.CreateHeavyBarrier();
@@ -528,6 +542,8 @@ namespace Client
             wallMaterial = PhongTexturedMaterial.CreateWall();
             flatMaterial = PhongTexturedMaterial.CreateFlat();
             bombMaterial = PhongTexturedMaterial.CreateBomb();
+            explosionMaterial = PhongTexturedMaterial.CreateExplosion();
+
             light = new Light()
             {
                 Position = new Vector3(0, 6, -10),

@@ -58,6 +58,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="3dsReader.cs" />
+    <Compile Include="AudioManager.cs" />
     <Compile Include="Camera.cs" />
     <Compile Include="ClientSocket.cs" />
     <Compile Include="Configuration\Configuration.cs" />
@@ -66,6 +67,7 @@
     <Compile Include="Configuration\Model.cs" />
     <Compile Include="Configuration\Parameters.cs" />
     <Compile Include="Configuration\Texture.cs" />
+    <Compile Include="Decal.cs" />
     <Compile Include="GraphicObject.cs" />
     <Compile Include="Light.cs" />
     <Compile Include="MainForm.cs">

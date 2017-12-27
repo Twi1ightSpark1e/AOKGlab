@@ -146,6 +146,22 @@ namespace Client
             }
             return new Model(points.ToArray(), indices.ToArray(), ShapeMode.Empty);
         }
+
+        public static Model CreateExplosion()
+        {
+            ModelPoint[] points = new ModelPoint[]
+            {
+                new ModelPoint((-1, -1, -1), (0, 1, 0), (0, 0)),
+                new ModelPoint((-1, -1, +1), (0, 1, 0), (0, 1)),
+                new ModelPoint((+1, -1, -1), (0, 1, 0), (1, 0)),
+                new ModelPoint((+1, -1, +1), (0, 1, 0), (1, 1))
+            };
+            ushort[] indices = new ushort[]
+            {
+                0, 1, 2, 2, 1, 3
+            };
+            return new Model(points, indices, ShapeMode.Decal);
+        }
         #endregion
         public void Show()
         {
