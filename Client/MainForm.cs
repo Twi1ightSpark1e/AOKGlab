@@ -48,6 +48,8 @@ namespace Client
                     if (fpsCountHelper == null)
                         fpsCountHelper = Stopwatch.StartNew();
                     else fpsCountHelper.Restart();
+
+                    AudioManager.Play(SoundType.Ambient, new Vector2(0, 0));
                 }
                 else
                 {
@@ -312,6 +314,7 @@ namespace Client
             units = JsonConvert.DeserializeObject<MapUnit[]>(message.Remove(0, 5));
             fieldColumnsCount = units.Max((unit) => unit.x) + 1;
             fieldRowsCount = units.Max((unit) => unit.z) + 1;
+            AudioManager.Initialize((fieldColumnsCount, fieldRowsCount));
             Invoke((MethodInvoker)delegate
             {
                 flatModel = Model.CreateFlat(fieldRowsCount, fieldColumnsCount);
@@ -333,6 +336,7 @@ namespace Client
                 graphicObjects.Clear();
                 explosions.Clear();
             });
+            AudioManager.UnloadAll();
         }
 
         private void MoveHandler(string message)
@@ -349,6 +353,7 @@ namespace Client
                     break;
                 }
             }
+            AudioManager.Play(SoundType.Shift, new Vector2(int.Parse(xz[0]), int.Parse(xz[1])));
             Debug.WriteLine(JsonConvert.SerializeObject(playerObjects.Select((player) => player.Position)));
         }
 
@@ -385,6 +390,7 @@ namespace Client
                 graphicObjects.Remove(bombObject);
                 explosions.Add(new GraphicObject(explosionModel, explosionMaterial, (int.Parse(xz[0]), int.Parse(xz[1])), (fieldColumnsCount, fieldRowsCount), 0));
                 bombHasBeenPlanted = false;
+                AudioManager.Play(SoundType.Explosion, new Vector2(int.Parse(xz[0]), int.Parse(xz[1])));
             });
             bombTriggerThread.Start(bombTriggerTime);
             waitUntilResultReceive = false;
@@ -399,6 +405,17 @@ namespace Client
                 MessageBox.Show("Сервер не может обработать нового игрока");
                 Connected = false;
             }
+        }
+
+        private void DeadHandler()
+        {
+            AudioManager.Play(SoundType.Death, new Vector2(1, 0));
+            Invoke((MethodInvoker)delegate
+            {
+                clientSocket.Disconnect();
+                MessageBox.Show("Вы взорвались на бомбе!");
+            });
+            CloseHandler();
         }
 
         private void connectButton_Click(object sender, EventArgs e)
@@ -430,6 +447,8 @@ namespace Client
                     BombHandler(msg);
                 else if (msg.StartsWith("err"))
                     ErrorHandler(msg);
+                else if (msg.StartsWith("dead"))
+                    DeadHandler();
             };
             try
             {
@@ -464,6 +483,7 @@ namespace Client
                 dirs |= (state.IsKeyDown(Key.Minus) || state.IsKeyDown(Key.KeypadMinus)) ? Directions.Backward : Directions.None;
                 camera.CurrentDirection = dirs;
                 camera.Simulate(millisecondsElapsed / 1000);
+                AudioManager.SetListener(camera.Eye, camera.RadianX, camera.RadianY);
 
                 int move = 0;
                 if (state.IsKeyDown(Key.W))
@@ -564,6 +584,8 @@ namespace Client
             }
 
             Connected = false;
+
+            WavLoader.InitializeWaves();
         }
 
         private void changeModelButton_Click(object sender, EventArgs e)

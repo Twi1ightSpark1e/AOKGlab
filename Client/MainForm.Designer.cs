@@ -132,7 +132,7 @@
             this.Controls.Add(this.label1);
             this.Controls.Add(this.changeModelButton);
             this.Name = "MainForm";
-            this.Text = "Лабораторная работа №7, клиент";
+            this.Text = "Лабораторная работа №10, клиент";
             this.Activated += new System.EventHandler(this.MainForm_Activated);
             this.Deactivate += new System.EventHandler(this.MainForm_Deactivate);
             this.ResumeLayout(false);

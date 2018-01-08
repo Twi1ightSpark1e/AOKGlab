@@ -74,6 +74,7 @@ namespace Client
     {
         Ambient,
         Death,
-        Explosion
+        Explosion,
+        Shift
     }
 }

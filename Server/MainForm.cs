@@ -28,6 +28,16 @@ namespace Server
             x = coordinates.x;
             z = coordinates.z;
         }
+
+        public static bool operator ==(MapUnit value1, MapUnit value2)
+        {
+            return ((value1.x == value2.x) && (value1.z == value2.z) && (value1.value == value2.value));
+        }
+
+        public static bool operator !=(MapUnit value1, MapUnit value2)
+        {
+            return ((value1.x != value2.x) || (value1.z != value2.z) || (value1.value != value2.value));
+        }
     }
 
     public struct CameraCoordinates
@@ -295,6 +305,22 @@ namespace Server
                                     z = z,
                                     value = (int)SquareContent.Empty
                                 }, tmpSquare));
+                            }
+                        }
+                        for (int i = 0; i < players.Count; i++)
+                        {
+                            if ((players[i].mapUnit.x >= bombMapUnit.x - BombTriggerRadius) &&
+                                (players[i].mapUnit.x <= bombMapUnit.x + BombTriggerRadius) &&
+                                (players[i].mapUnit.z >= bombMapUnit.z - BombTriggerRadius) &&
+                                (players[i].mapUnit.z <= bombMapUnit.z + BombTriggerRadius))
+                            {
+                                ServerMode.Server.SendTo(players[i].client, "dead");
+                                ServerMode.Server.SendAllExcept(players[i].client, $"delplayer({players[i].mapUnit.x};{players[i].mapUnit.z})");
+                                foreach (Square square in squaresPanel.Controls)
+                                {
+                                    if (square.Tag.ToString() == $"{players[i].mapUnit.x};{players[i].mapUnit.z}")
+                                        square.SquareContent = SquareContent.Empty;
+                                }
                             }
                         }
                         bombMapUnit = new MapUnit()
