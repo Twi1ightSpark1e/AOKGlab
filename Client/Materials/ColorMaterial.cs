@@ -13,7 +13,7 @@ namespace Client.Materials
     {
         public Vector4 Color { get; set; }
 
-        public void Apply()
+        public virtual void Apply()
         {
             GL.Disable(EnableCap.Lighting);
             Texture.Disable();

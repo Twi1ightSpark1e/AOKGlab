@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
+using OpenTK;
 
 namespace Client
 {
@@ -76,5 +74,12 @@ namespace Client
         Death,
         Explosion,
         Shift
+    }
+
+    struct ParticlePoint
+    {
+        public Vector4 color;
+        public Vector3 coord;
+        public Vector2 texCoord;
     }
 }

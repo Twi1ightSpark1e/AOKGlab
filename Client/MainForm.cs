@@ -77,7 +77,7 @@ namespace Client
         internal static List<GraphicObject> Scene => graphicObjects;
 
         //private static List<IMaterial> materials;
-        private IMaterial playerMaterial, bombMaterial, lightBarrierMaterial, heavyBarrierMaterial, wallMaterial, flatMaterial, explosionMaterial;
+        private IMaterial playerMaterial, bombMaterial, lightBarrierMaterial, heavyBarrierMaterial, wallMaterial, flatMaterial, explosionMaterial, particleMaterial;
         private Model playerModel, bombModel, lightBarrierModel, heavyBarrierModel, wallModel, flatModel, explosionModel;
         private int fieldRowsCount, fieldColumnsCount;
         private Light light;
@@ -391,6 +391,7 @@ namespace Client
                 explosions.Add(new GraphicObject(explosionModel, explosionMaterial, (int.Parse(xz[0]), int.Parse(xz[1])), (fieldColumnsCount, fieldRowsCount), 0));
                 bombHasBeenPlanted = false;
                 AudioManager.Play(SoundType.Explosion, new Vector2(int.Parse(xz[0]), int.Parse(xz[1])));
+                ParticleSystem.Create(new Vector2(int.Parse(xz[0]), int.Parse(xz[1])), 2f);
             });
             bombTriggerThread.Start(bombTriggerTime);
             waitUntilResultReceive = false;
@@ -526,13 +527,14 @@ namespace Client
             for (int i = 0; i < playerObjects.Count; i++)
                 if (playerObjects[i].IsMoving)
                     playerObjects[i].Simulate(millisecondsElapsed / 1000);
-            glControl1.Invalidate();
             if (fpsCountHelper.ElapsedMilliseconds >= 1000)
             {
                 frameRate = 1 / (millisecondsElapsed / 1000);
                 fpsCountHelper.Restart();
                 SetText();
             }
+            ParticleSystem.Simulate(millisecondsElapsed / 1000);
+            glControl1.Invalidate();
         }
 
         private void glControl1_Load(object sender, EventArgs e)
@@ -586,6 +588,14 @@ namespace Client
             Connected = false;
 
             WavLoader.InitializeWaves();
+
+            var particleTexture = Texture.GetTextureByName("textures/cloud.png");
+            particleMaterial = new ColorTexturedMaterial()
+            {
+                Color = new Vector4(255, 255, 255, 255),
+                Texture = particleTexture
+            };
+            ParticleSystem.Material = particleMaterial;
         }
 
         private void changeModelButton_Click(object sender, EventArgs e)
